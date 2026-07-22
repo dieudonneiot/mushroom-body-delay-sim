@@ -14,7 +14,7 @@ from mbsim.graph import build_graph, sanity_report
 from mbsim.i18n import t
 from mbsim.metrics import compare
 from mbsim.mushroom_body import extract_mb_subgraph
-from mbsim.plotly_viz import build_network_figure
+from mbsim.plotly_viz import build_network_figure, build_propagation_animation
 
 st.set_page_config(page_title="Mushroom Body Delay Simulator", page_icon="🧠", layout="wide")
 
@@ -160,8 +160,8 @@ st.caption(
     )
 )
 
-tab_network, tab_comparison, tab_data = st.tabs(
-    [t("tab_network", lang), t("tab_comparison", lang), t("tab_data", lang)]
+tab_network, tab_comparison, tab_data, tab_propagation = st.tabs(
+    [t("tab_network", lang), t("tab_comparison", lang), t("tab_data", lang), t("tab_propagation", lang)]
 )
 
 with tab_network:
@@ -228,10 +228,26 @@ with tab_comparison:
         st.plotly_chart(fig, use_container_width=True)
 
 with tab_data:
-    st.dataframe(result.df, use_container_width=True)
+    column_labels = {
+        "node": t("col_node", lang),
+        "healthy_time": t("col_healthy_time", lang),
+        "damaged_time": t("col_damaged_time", lang),
+        "pct_deviation": t("col_pct_deviation", lang),
+    }
+    st.dataframe(result.df.rename(columns=column_labels), use_container_width=True)
     st.download_button(
         t("download_button", lang),
         result.df.to_csv(index=False),
         file_name="comparison.csv",
         mime="text/csv",
+    )
+
+with tab_propagation:
+    st.caption(t("caption_propagation", lang))
+    speed_ms = st.slider(t("label_anim_speed", lang), 50, 1500, 400, 50)
+    st.plotly_chart(
+        build_propagation_animation(
+            graph, result.healthy_fire_times, result.damaged_fire_times, lang, frame_duration_ms=speed_ms
+        ),
+        use_container_width=True,
     )

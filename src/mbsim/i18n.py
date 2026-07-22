@@ -79,6 +79,34 @@ STRINGS = {
     "tab_network": {"en": "Network View", "tr": "Ağ Görünümü"},
     "tab_comparison": {"en": "Comparison", "tr": "Karşılaştırma"},
     "tab_data": {"en": "Data", "tr": "Veri"},
+    "tab_propagation": {"en": "Live Propagation", "tr": "Canlı Yayılım"},
+    "caption_propagation": {
+        "en": (
+            "Press ▶ Play to watch the signal spread through both networks on a shared "
+            "simulated-time axis — the damaged network visibly falls behind as it plays. "
+            "Nodes light up (colored by role) the instant they fire; drag the slider to "
+            "scrub manually."
+        ),
+        "tr": (
+            "Sinyalin her iki ağda da ortak bir simüle-zaman ekseninde nasıl yayıldığını "
+            "izlemek için ▶ Oynat'a basın — hasarlı ağın oynatma sırasında geride kaldığı "
+            "açıkça görülür. Nöronlar ateşlendiği anda (role göre renklendirilmiş olarak) "
+            "yanar; elle gezinmek için kaydırıcıyı sürükleyin."
+        ),
+    },
+    "anim_play": {"en": "▶ Play", "tr": "▶ Oynat"},
+    "anim_pause": {"en": "⏸ Pause", "tr": "⏸ Duraklat"},
+    "anim_time_prefix": {"en": "Simulated time", "tr": "Simüle edilmiş zaman"},
+    "anim_fired_healthy": {"en": "Healthy fired", "tr": "Sağlıklıda ateşlenen"},
+    "anim_fired_damaged": {"en": "Damaged fired", "tr": "Hasarlıda ateşlenen"},
+    "label_anim_speed": {
+        "en": "Playback speed (ms per frame — higher is slower)",
+        "tr": "Oynatma hızı (kare başına ms — yüksek değer daha yavaş)",
+    },
+    "col_node": {"en": "Neuron ID", "tr": "Nöron Kimliği"},
+    "col_healthy_time": {"en": "Healthy time", "tr": "Sağlıklı zaman"},
+    "col_damaged_time": {"en": "Damaged time", "tr": "Hasarlı zaman"},
+    "col_pct_deviation": {"en": "% deviation", "tr": "% sapma"},
     "warn_signal_not_reached": {
         "en": "The signal never reached an output neuron with the current role selection.",
         "tr": "Mevcut rol seçimiyle sinyal hiçbir çıktı nöronuna ulaşmadı.",

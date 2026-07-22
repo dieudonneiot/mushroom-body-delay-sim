@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from mbsim.layout import ROLE_COLORS, layered_layout as _layered_layout
+from mbsim.layout import ROLE_COLORS, edge_style, layered_layout as _layered_layout, marker_size, show_node_labels
 
 
 def plot_network_structure(graph: nx.DiGraph, out_path: str, title: str = "Mushroom Body pathway") -> None:
@@ -14,14 +14,24 @@ def plot_network_structure(graph: nx.DiGraph, out_path: str, title: str = "Mushr
     node_colors = [ROLE_COLORS.get(graph.nodes[n].get("role"), "#999999") for n in graph.nodes]
     weights = [graph.edges[e]["weight"] for e in graph.edges]
     max_w = max(weights) if weights else 1
-    edge_widths = [0.5 + 3.5 * (w / max_w) for w in weights]
+    min_width, max_width, alpha = edge_style(len(weights))
+    edge_widths = [min_width + (max_width - min_width) * (w / max_w) for w in weights]
+    node_size = marker_size(graph.number_of_nodes()) ** 2
 
     fig, ax = plt.subplots(figsize=(9, 6))
-    nx.draw_networkx_nodes(graph, pos, node_color=node_colors, node_size=300, ax=ax)
+    nx.draw_networkx_nodes(graph, pos, node_color=node_colors, node_size=node_size, ax=ax)
     nx.draw_networkx_edges(
-        graph, pos, width=edge_widths, edge_color="#888888", arrowsize=10, alpha=0.7, ax=ax
+        graph,
+        pos,
+        width=edge_widths,
+        edge_color="#888888",
+        arrowsize=10,
+        arrows=graph.number_of_edges() <= 200,
+        alpha=alpha,
+        ax=ax,
     )
-    nx.draw_networkx_labels(graph, pos, font_size=7, ax=ax)
+    if show_node_labels(graph.number_of_nodes()):
+        nx.draw_networkx_labels(graph, pos, font_size=7, ax=ax)
 
     handles = [
         plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=color, markersize=10, label=role)
@@ -45,9 +55,11 @@ def plot_network_delay(
     pos = _layered_layout(graph)
     reached = [t for t in fire_times.values()]
     vmax = max(reached) if reached else 1.0
+    node_size = marker_size(graph.number_of_nodes()) ** 2
+    _, _, edge_alpha = edge_style(graph.number_of_edges())
 
     node_colors = [fire_times.get(n, None) for n in graph.nodes]
-    unreached_mask = [c is None for c in node_colors]
+    unreached = [n for n, c in zip(graph.nodes, node_colors) if c is None]
     plotted_colors = [c if c is not None else 0.0 for c in node_colors]
 
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -58,15 +70,23 @@ def plot_network_delay(
         cmap="plasma_r",
         vmin=0.0,
         vmax=vmax,
-        node_size=300,
+        node_size=node_size,
         ax=ax,
     )
-    for node, is_unreached in zip(graph.nodes, unreached_mask):
-        if is_unreached:
-            nx.draw_networkx_nodes(graph, pos, nodelist=[node], node_color="#cccccc", node_size=300, ax=ax)
+    if unreached:
+        nx.draw_networkx_nodes(graph, pos, nodelist=unreached, node_color="#cccccc", node_size=node_size, ax=ax)
 
-    nx.draw_networkx_edges(graph, pos, edge_color="#cccccc", arrowsize=10, alpha=0.6, ax=ax)
-    nx.draw_networkx_labels(graph, pos, font_size=7, ax=ax)
+    nx.draw_networkx_edges(
+        graph,
+        pos,
+        edge_color="#cccccc",
+        arrowsize=10,
+        arrows=graph.number_of_edges() <= 200,
+        alpha=edge_alpha,
+        ax=ax,
+    )
+    if show_node_labels(graph.number_of_nodes()):
+        nx.draw_networkx_labels(graph, pos, font_size=7, ax=ax)
 
     fig.colorbar(nodes, ax=ax, label="Arrival time")
     ax.set_title(title)
