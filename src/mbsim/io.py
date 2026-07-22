@@ -6,6 +6,9 @@ import pandas as pd
 
 CONNECTIONS_REQUIRED_COLUMNS = ["pre_root_id", "post_root_id", "syn_count"]
 CLASSIFICATION_REQUIRED_COLUMNS = ["root_id", "cell_type"]
+# Current Codex "Classification / Hierarchical Annotations" exports have no flat
+# cell_type column; `class` (e.g. Kenyon_Cell, MBON, ALPN, DAN) plays that role.
+CLASSIFICATION_CELL_TYPE_ALIASES = ["class"]
 
 
 def _validate_columns(df: pd.DataFrame, required: list[str], source: str) -> None:
@@ -28,6 +31,11 @@ def load_connections(path: Path | str) -> pd.DataFrame:
 
 def load_classification(path: Path | str) -> pd.DataFrame:
     df = pd.read_csv(path)
+    if "cell_type" not in df.columns:
+        for alias in CLASSIFICATION_CELL_TYPE_ALIASES:
+            if alias in df.columns:
+                df = df.rename(columns={alias: "cell_type"})
+                break
     _validate_columns(df, CLASSIFICATION_REQUIRED_COLUMNS, str(path))
     return df
 

@@ -1,0 +1,25 @@
+# Mushroom Body simulation config for the real Codex export in data/raw/.
+# Same as default.yaml except data.mode and roles, which use the real
+# FlyWire/Codex classification labels (ALPN/Kenyon_Cell/MBON) instead of the
+# fixture's simplified PN/KC/MBON.
+data:
+  mode: raw
+  raw_dir: data/raw
+  fixture_dir: data/fixtures
+
+roles:
+  input: [ALPN]
+  relay: [Kenyon_Cell]
+  output: [MBON]
+
+simulation:
+  conduction_velocity: 1.0
+  threshold: 1.0
+
+damage:
+  # Placeholder severity in [0, 1]; swap in a literature-derived value/function
+  # once the medical team provides one (see mbsim/damage.py).
+  severity: 0.3
+
+output:
+  dir: outputs

@@ -20,7 +20,11 @@ st.set_page_config(page_title="Mushroom Body Delay Simulator", page_icon="🧠",
 
 FIXTURE_DIR = Path("data/fixtures")
 RAW_DIR = Path("data/raw")
-DEFAULT_ROLE_GUESSES = {"input": "PN", "relay": "KC", "output": "MBON"}
+DEFAULT_ROLE_GUESSES = {
+    "input": ["PN", "ALPN"],
+    "relay": ["KC", "Kenyon_Cell"],
+    "output": ["MBON"],
+}
 
 
 @st.cache_data(show_spinner="Loading connectome data...")
@@ -44,8 +48,10 @@ def build_mb_graph(connections, classification, roles_key):
 
 
 def default_selection(cell_types, role):
-    guess = DEFAULT_ROLE_GUESSES[role]
-    return [guess] if guess in cell_types else []
+    for guess in DEFAULT_ROLE_GUESSES[role]:
+        if guess in cell_types:
+            return [guess]
+    return []
 
 
 def format_role_counts(role_counts: dict, lang: str) -> str:
