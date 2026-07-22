@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mbsim"
+version = "0.1.0"
+description = "Mushroom Body signal-delay simulation (healthy vs. Alzheimer's-damaged)"
+requires-python = ">=3.10"
+dependencies = [
+    "networkx>=3.2",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "matplotlib>=3.8",
+    "streamlit>=1.38",
+    "plotly>=5.24",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+mbsim = "mbsim.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,24 @@
+# Mushroom Body simulation config.
+data:
+  # "fixture" uses the small synthetic dev graph in data/fixtures/.
+  # "raw" reads the real Codex export from data/raw/ (see data/raw/README.md).
+  mode: fixture
+  raw_dir: data/raw
+  fixture_dir: data/fixtures
+
+roles:
+  input: [PN]
+  relay: [KC]
+  output: [MBON]
+
+simulation:
+  conduction_velocity: 1.0
+  threshold: 1.0
+
+damage:
+  # Placeholder severity in [0, 1]; swap in a literature-derived value/function
+  # once the medical team provides one (see mbsim/damage.py).
+  severity: 0.3
+
+output:
+  dir: outputs
