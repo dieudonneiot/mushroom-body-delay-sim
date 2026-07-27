@@ -63,11 +63,14 @@ def plot_network_delay(
     plotted_colors = [c if c is not None else 0.0 for c in node_colors]
 
     fig, ax = plt.subplots(figsize=(9, 6))
+    # Plain "plasma", not "plasma_r" — must match plotly_viz.py's colorscale="Plasma"
+    # direction so the CLI's static images and the interactive app agree on what a
+    # given arrival time looks like.
     nodes = nx.draw_networkx_nodes(
         graph,
         pos,
         node_color=plotted_colors,
-        cmap="plasma_r",
+        cmap="plasma",
         vmin=0.0,
         vmax=vmax,
         node_size=node_size,

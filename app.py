@@ -14,7 +14,9 @@ from mbsim.graph import build_graph, sanity_report
 from mbsim.i18n import t
 from mbsim.metrics import compare
 from mbsim.mushroom_body import extract_mb_subgraph
-from mbsim.plotly_viz import build_network_figure, build_propagation_animation
+from mbsim.perception import time_perception_deviation
+from mbsim.perturbations import PERTURBATION_TYPES, combined_severity
+from mbsim.plotly_viz import build_network_figure, build_propagation_animation, build_weber_fechner_figure
 
 st.set_page_config(page_title="Mushroom Body Delay Simulator", page_icon="🧠", layout="wide")
 
@@ -56,6 +58,11 @@ def default_selection(cell_types, role):
 
 def format_role_counts(role_counts: dict, lang: str) -> str:
     return ", ".join(f"{t(f'role_{role}', lang)}: {count}" for role, count in role_counts.items())
+
+
+def _sync_intensity(source_key, target_key):
+    """Keep a perturbation's slider and number-input widgets showing the same value."""
+    st.session_state[target_key] = st.session_state[source_key]
 
 
 # --- Language toggle (first, so everything below can be translated) ---
@@ -116,7 +123,88 @@ with st.sidebar:
     st.header(t("header_sim_params", lang))
     conduction_velocity = st.slider(t("label_conduction_velocity", lang), 0.1, 3.0, 1.0, 0.1)
     threshold = st.slider(t("label_threshold", lang), 0.5, 5.0, 1.0, 0.1)
-    severity = st.slider(t("label_severity", lang), 0.0, 1.0, 0.3, 0.01)
+
+    st.header(t("header_perturbations", lang))
+    if "perturbations" not in st.session_state:
+        st.session_state.perturbations = []
+    if "next_perturbation_id" not in st.session_state:
+        st.session_state.next_perturbation_id = 0
+
+    if st.button(t("btn_add_perturbation", lang), use_container_width=True):
+        st.session_state.perturbations.append(
+            {"id": st.session_state.next_perturbation_id, "type": "tau", "intensity": 0.0}
+        )
+        st.session_state.next_perturbation_id += 1
+
+    if not st.session_state.perturbations:
+        st.caption(t("msg_no_perturbations", lang))
+
+    perturbation_type_options = list(PERTURBATION_TYPES.keys())
+    remove_id = None
+    for entry in st.session_state.perturbations:
+        pid = entry["id"]
+        slider_key, number_key = f"pert_slider_{pid}", f"pert_number_{pid}"
+        st.session_state.setdefault(slider_key, entry["intensity"])
+        st.session_state.setdefault(number_key, entry["intensity"])
+
+        with st.container(border=True):
+            type_col, remove_col = st.columns([5, 1])
+            with type_col:
+                entry["type"] = st.selectbox(
+                    t("label_perturbation_type", lang),
+                    perturbation_type_options,
+                    index=perturbation_type_options.index(entry["type"]),
+                    format_func=lambda key: t(PERTURBATION_TYPES[key]["label_key"], lang),
+                    key=f"pert_type_{pid}",
+                    help=t(PERTURBATION_TYPES[entry["type"]]["description_key"], lang),
+                )
+            with remove_col:
+                st.write("")
+                if st.button(t("btn_remove_perturbation", lang), key=f"pert_remove_{pid}"):
+                    remove_id = pid
+
+            # Shown directly (not just as a hover tooltip on the selectbox above) so
+            # what each factor represents is visible at a glance, not just on hover.
+            st.caption(t(PERTURBATION_TYPES[entry["type"]]["description_key"], lang))
+
+            slider_col, number_col = st.columns([3, 1])
+            with slider_col:
+                st.slider(
+                    t("label_intensity", lang),
+                    min_value=0.0,
+                    max_value=100.0,
+                    step=1.0,
+                    key=slider_key,
+                    on_change=_sync_intensity,
+                    args=(slider_key, number_key),
+                )
+            with number_col:
+                st.number_input(
+                    t("label_intensity", lang),
+                    min_value=0.0,
+                    max_value=100.0,
+                    step=1.0,
+                    key=number_key,
+                    on_change=_sync_intensity,
+                    args=(number_key, slider_key),
+                    label_visibility="collapsed",
+                )
+            entry["intensity"] = st.session_state[slider_key]
+
+    if remove_id is not None:
+        st.session_state.perturbations = [e for e in st.session_state.perturbations if e["id"] != remove_id]
+        st.rerun()
+
+    severity = combined_severity(st.session_state.perturbations)
+    st.caption(t("caption_combined_severity", lang, pct=f"{severity * 100:.1f}"))
+    st.progress(min(severity, 1.0))
+    if severity >= 0.95:
+        st.warning(t("warn_high_severity", lang))
+
+    with st.expander(t("header_calibration", lang)):
+        ms_per_time_unit = st.number_input(
+            t("label_ms_calibration", lang), min_value=0.1, max_value=1000.0, value=5.0, step=0.1
+        )
 
 if not input_types or not relay_types or not output_types:
     st.warning(t("warn_select_roles", lang))
@@ -160,9 +248,53 @@ st.caption(
     )
 )
 
-tab_network, tab_comparison, tab_data, tab_propagation = st.tabs(
-    [t("tab_network", lang), t("tab_comparison", lang), t("tab_data", lang), t("tab_propagation", lang)]
+tab_perception, tab_network, tab_comparison, tab_data, tab_propagation = st.tabs(
+    [
+        t("tab_perception", lang),
+        t("tab_network", lang),
+        t("tab_comparison", lang),
+        t("tab_data", lang),
+        t("tab_propagation", lang),
+    ]
 )
+
+with tab_perception:
+    healthy_delays = [result.healthy_fire_times[n] for n in output_nodes if n in result.healthy_fire_times]
+    damaged_delays = [result.damaged_fire_times[n] for n in output_nodes if n in result.damaged_fire_times]
+
+    if not healthy_delays or not damaged_delays:
+        st.warning(t("warn_signal_not_reached", lang))
+    else:
+        healthy_ms = (sum(healthy_delays) / len(healthy_delays)) * ms_per_time_unit
+        damaged_ms = (sum(damaged_delays) / len(damaged_delays)) * ms_per_time_unit
+        net_ms = damaged_ms - healthy_ms
+
+        delay_col, wf_col = st.columns(2)
+        with delay_col:
+            st.subheader(t("header_physical_delay", lang))
+            m1, m2, m3 = st.columns(3)
+            m1.metric(t("metric_healthy_delay_ms", lang), f"{healthy_ms:.2f}")
+            m2.metric(t("metric_damaged_delay_ms", lang), f"{damaged_ms:.2f}")
+            m3.metric(t("metric_net_delay_ms", lang), f"{net_ms:+.2f}")
+
+        with wf_col:
+            st.subheader(t("header_weber_fechner", lang))
+            st.caption(t("caption_weber_fechner", lang))
+            perception = time_perception_deviation(healthy_ms, damaged_ms)
+            st.plotly_chart(
+                build_weber_fechner_figure(
+                    perception["t"],
+                    perception["healthy"],
+                    perception["damaged"],
+                    perception["pct_deviation"],
+                    lang,
+                ),
+                use_container_width=True,
+            )
+            st.metric(t("metric_deviation_pct", lang), f"{perception['pct_deviation']:.1f}%")
+
+        if severity == 0:
+            st.info(t("info_zero_severity", lang))
 
 with tab_network:
     if result.df.empty:

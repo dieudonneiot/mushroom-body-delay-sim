@@ -186,9 +186,54 @@ def build_network_figure(
         title=title,
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
+        # Node/edge/text colors below are all chosen for a light background — commit
+        # to white on both the plot area and the surrounding paper (rather than
+        # leaving paper_bgcolor at its default) so the chart reads consistently
+        # regardless of whether the Streamlit app itself is in light or dark theme.
         plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(color="#222222"),
         height=550,
         margin=dict(l=10, r=10, t=50, b=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    )
+    return fig
+
+
+def build_weber_fechner_figure(
+    t_values,
+    healthy,
+    damaged,
+    pct_deviation: float,
+    lang: str = "en",
+) -> go.Figure:
+    """Log-x overlay of the healthy vs. damaged Weber-Fechner perceived-time curves
+    (see `mbsim.perception.time_perception_deviation`), with the computed mean %
+    deviation between them called out as a title annotation."""
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(x=t_values, y=healthy, mode="lines", name=t("legend_healthy", lang), line=dict(color="#1f77b4", width=2))
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=t_values,
+            y=damaged,
+            mode="lines",
+            name=t("legend_damaged", lang),
+            line=dict(color="#d62728", width=2),
+            fill="tonexty",
+            fillcolor="rgba(214,39,40,0.12)",
+        )
+    )
+    fig.update_layout(
+        title=t("chart_weber_fechner_title", lang, pct=f"{pct_deviation:.1f}"),
+        xaxis=dict(title=t("axis_physical_time", lang), type="log", gridcolor="#e5e5e5"),
+        yaxis=dict(title=t("axis_perceived_time", lang), gridcolor="#e5e5e5"),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(color="#222222"),
+        height=450,
+        margin=dict(l=10, r=10, t=60, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
     )
     return fig
@@ -351,6 +396,9 @@ def build_propagation_animation(
         height=550,
         margin=dict(l=10, r=10, t=90, b=10),
         showlegend=False,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(color="#222222"),
         title=dict(text=initial_title or "", x=0.5, xanchor="center", font=dict(size=15)),
         updatemenus=[
             dict(

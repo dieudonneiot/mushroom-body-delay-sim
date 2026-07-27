@@ -59,7 +59,6 @@ STRINGS = {
         "tr": "Sağlıklı iletim hızı",
     },
     "label_threshold": {"en": "Firing threshold", "tr": "Ateşleme eşiği"},
-    "label_severity": {"en": "Disease severity", "tr": "Hastalık şiddeti"},
     "warn_select_roles": {
         "en": "Select at least one cell type for each of input, relay, and output.",
         "tr": "Girdi, aktarıcı ve çıktı için en az birer hücre tipi seçin.",
@@ -152,6 +151,91 @@ STRINGS = {
     "role_relay": {"en": "relay", "tr": "aktarıcı"},
     "role_output": {"en": "output", "tr": "çıktı"},
     "role_unknown": {"en": "unknown", "tr": "bilinmiyor"},
+    # Perturbation panel
+    "header_perturbations": {"en": "Perturbations", "tr": "Bozulmalar"},
+    "btn_add_perturbation": {"en": "＋ Add Perturbation", "tr": "＋ Bozulma Ekle"},
+    "btn_remove_perturbation": {"en": "✕ Remove", "tr": "✕ Kaldır"},
+    "label_perturbation_type": {"en": "Impairment", "tr": "Bozulma tipi"},
+    "label_intensity": {"en": "Intensity (%)", "tr": "Şiddet (%)"},
+    "msg_no_perturbations": {
+        "en": "No perturbations added yet — click “＋ Add Perturbation” to model a biological impairment.",
+        "tr": "Henüz bozulma eklenmedi — bir biyolojik bozulmayı modellemek için “＋ Bozulma Ekle”ye tıklayın.",
+    },
+    "caption_combined_severity": {
+        "en": "Combined severity: {pct}%",
+        "tr": "Birleşik şiddet: {pct}%",
+    },
+    "perturbation_tau": {"en": "Tau Protein", "tr": "Tau Proteini"},
+    "perturbation_tau_desc": {
+        "en": "Hyperphosphorylated tau tangles disrupting axonal transport.",
+        "tr": "Aksonal taşımayı bozan hiperfosforile tau yumakları.",
+    },
+    "perturbation_amyloid": {"en": "Beta-Amyloid", "tr": "Beta-Amiloid"},
+    "perturbation_amyloid_desc": {
+        "en": "Amyloid-beta plaque buildup impairing synaptic transmission.",
+        "tr": "Sinaptik iletimi bozan amiloid-beta plak birikimi.",
+    },
+    "perturbation_gaba": {"en": "GABA Dysfunction", "tr": "GABA İşlev Bozukluğu"},
+    "perturbation_gaba_desc": {
+        "en": "Reduced inhibitory GABAergic signaling in the Mushroom Body circuit.",
+        "tr": "Mantar Cisimciği devresinde azalmış inhibitör GABAerjik sinyalleşme.",
+    },
+    "perturbation_apl": {"en": "APL Neuron Impairment", "tr": "APL Nöron Bozulması"},
+    "perturbation_apl_desc": {
+        "en": "Weakened Anterior Paired Lateral neuron feedback inhibition.",
+        "tr": "Zayıflamış Anterior Paired Lateral nöron geri besleme inhibisyonu.",
+    },
+    # Perception & Delay tab
+    "tab_perception": {"en": "Perception & Delay", "tr": "Algı ve Gecikme"},
+    "header_physical_delay": {"en": "Physical Conduction Delay", "tr": "Fiziksel İletim Gecikmesi"},
+    "metric_healthy_delay_ms": {"en": "Healthy delay (ms)", "tr": "Sağlıklı gecikme (ms)"},
+    "metric_damaged_delay_ms": {"en": "Damaged delay (ms)", "tr": "Hasarlı gecikme (ms)"},
+    "metric_net_delay_ms": {"en": "Net delay (Δms)", "tr": "Net gecikme (Δms)"},
+    "header_weber_fechner": {
+        "en": "Weber-Fechner Time Perception Deviation",
+        "tr": "Weber-Fechner Zaman Algısı Sapması",
+    },
+    "caption_weber_fechner": {
+        "en": (
+            "Perceived vs. physical time under the Weber-Fechner law, healthy vs. damaged "
+            "(placeholder model — see mbsim/perception.py)."
+        ),
+        "tr": (
+            "Weber-Fechner yasasına göre algılanan ve fiziksel zaman, sağlıklı ve hasarlı "
+            "(yer tutucu model — bkz. mbsim/perception.py)."
+        ),
+    },
+    "chart_weber_fechner_title": {
+        "en": "Time perception deviation: {pct}%",
+        "tr": "Zaman algısı sapması: %{pct}",
+    },
+    "axis_physical_time": {"en": "Physical time (s, log scale)", "tr": "Fiziksel zaman (s, logaritmik)"},
+    "axis_perceived_time": {
+        "en": "Perceived time (arbitrary units, placeholder model)",
+        "tr": "Algılanan zaman (keyfi birim, yer tutucu model)",
+    },
+    "metric_deviation_pct": {"en": "Time perception deviation", "tr": "Zaman algısı sapması"},
+    "header_calibration": {"en": "Calibration (placeholder)", "tr": "Kalibrasyon (yer tutucu)"},
+    "label_ms_calibration": {
+        "en": "Milliseconds per simulated time unit",
+        "tr": "Simüle edilmiş zaman birimi başına milisaniye",
+    },
+    "info_zero_severity": {
+        "en": "No active perturbations — healthy and damaged curves are identical, so 0% deviation is expected here, not a bug.",
+        "tr": "Etkin bozulma yok — sağlıklı ve hasarlı eğriler aynı, bu yüzden burada %0 sapma beklenen bir durumdur, hata değildir.",
+    },
+    "warn_high_severity": {
+        "en": (
+            "Combined severity is at or near 100% — this models near-total conduction "
+            "blockage, so delay/deviation numbers below will look extreme by design, not "
+            "because of an error."
+        ),
+        "tr": (
+            "Birleşik şiddet %100'e yakın veya eşit — bu, iletimin neredeyse tamamen "
+            "durduğunu modeller, bu yüzden aşağıdaki gecikme/sapma sayıları bir hata değil, "
+            "tasarım gereği aşırı görünecektir."
+        ),
+    },
 }
 
 
