@@ -19,7 +19,16 @@ def run(config_path: str) -> None:
     data_dir = data_cfg["raw_dir"] if data_cfg["mode"] == "raw" else data_cfg["fixture_dir"]
     connections, classification = load_raw_data(data_dir)
 
-    edge_df, node_roles = extract_mb_subgraph(connections, classification, config["roles"])
+    damage_cfg = config["damage"]
+    perturbations = damage_cfg.get("perturbations", [])
+    # Every perturbation's target_root_ids (currently only APL uses this) must be
+    # force-included, or targeting.resolve_targets would never see that neuron's
+    # edges — see mushroom_body.py's extra_node_ids parameter.
+    extra_node_ids = sorted({rid for p in perturbations for rid in p.get("target_root_ids", [])})
+
+    edge_df, node_roles = extract_mb_subgraph(
+        connections, classification, config["roles"], extra_node_ids=extra_node_ids
+    )
     graph = build_graph(edge_df, node_roles)
     print_sanity_report(graph)
 
@@ -32,14 +41,13 @@ def run(config_path: str) -> None:
         )
 
     sim_cfg = config["simulation"]
-    damage_cfg = config["damage"]
     result = compare(
         graph,
         input_nodes,
         output_nodes,
         base_conduction_velocity=sim_cfg["conduction_velocity"],
         threshold=sim_cfg["threshold"],
-        severity=damage_cfg["severity"],
+        perturbations=perturbations,
     )
 
     out_dir = Path(config["output"]["dir"])
@@ -59,7 +67,11 @@ def run(config_path: str) -> None:
         graph,
         result.damaged_fire_times,
         str(out_dir / "network_damaged.png"),
-        title=f"Signal arrival time — damaged network (severity={damage_cfg['severity']})",
+        title=(
+            f"Signal arrival time — damaged network "
+            f"({result.summary['n_edges_velocity_targeted']}/{result.summary['n_edges_total']} edges velocity-targeted, "
+            f"{result.summary['n_nodes_threshold_targeted']}/{result.summary['n_nodes_total']} nodes threshold-targeted)"
+        ),
     )
 
     print("\nHealthy vs. damaged signal delay at output (MBON) nodes:")

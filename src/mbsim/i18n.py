@@ -116,6 +116,10 @@ STRINGS = {
         "en": "Damaged conduction velocity",
         "tr": "Hasarlı iletim hızı",
     },
+    "metric_damaged_threshold": {
+        "en": "Damaged firing threshold",
+        "tr": "Hasarlı ateşleme eşiği",
+    },
     "metric_outputs_reached": {
         "en": "Output neurons reached",
         "tr": "Ulaşılan çıktı nöronu",
@@ -126,6 +130,10 @@ STRINGS = {
     "expander_structure": {
         "en": "Show pathway structure (colored by role)",
         "tr": "Yolak yapısını göster (role göre renklendirilmiş)",
+    },
+    "expander_absolute_times": {
+        "en": "Show absolute arrival times (healthy vs. damaged, side by side)",
+        "tr": "Mutlak varış zamanlarını göster (sağlıklı ve hasarlı, yan yana)",
     },
     "warn_no_compare": {
         "en": "No output neurons were reached by the signal — nothing to compare.",
@@ -147,9 +155,28 @@ STRINGS = {
     "hover_arrival_time": {"en": "arrival time", "tr": "varış zamanı"},
     "legend_not_reached": {"en": "not reached", "tr": "ulaşılamadı"},
     "colorbar_arrival_time": {"en": "Arrival time", "tr": "Varış zamanı"},
+    "colorbar_delay_delta": {"en": "Δ delay (damaged − healthy)", "tr": "Δ gecikme (hasarlı − sağlıklı)"},
+    "hover_damaged_time": {"en": "damaged time", "tr": "hasarlı zaman"},
+    "hover_delay_delta": {"en": "Δ delay", "tr": "Δ gecikme"},
+    "chart_delta_title": {"en": "Delay difference (damaged − healthy)", "tr": "Gecikme farkı (hasarlı − sağlıklı)"},
+    "caption_delta_chart": {
+        "en": (
+            "Colored by how much later (red) or earlier (blue) each neuron fired in the "
+            "damaged network vs. the healthy one — this is the direct answer to \"where does "
+            "the damage show up,\" which two separately-colored healthy/damaged plots make "
+            "hard to see at a glance on a large graph."
+        ),
+        "tr": (
+            "Her nöronun hasarlı ağda sağlıklı ağa kıyasla ne kadar daha geç (kırmızı) veya "
+            "daha erken (mavi) ateşlendiğine göre renklendirilmiştir — bu, büyük bir grafikte "
+            "ayrı renklendirilmiş iki sağlıklı/hasarlı grafiğin tek bakışta göstermesi zor olan "
+            "\"hasar nerede ortaya çıkıyor\" sorusuna doğrudan cevap verir."
+        ),
+    },
     "role_input": {"en": "input", "tr": "girdi"},
     "role_relay": {"en": "relay", "tr": "aktarıcı"},
     "role_output": {"en": "output", "tr": "çıktı"},
+    "role_modulatory": {"en": "modulatory", "tr": "düzenleyici"},
     "role_unknown": {"en": "unknown", "tr": "bilinmiyor"},
     # Perturbation panel
     "header_perturbations": {"en": "Perturbations", "tr": "Bozulmalar"},
@@ -161,29 +188,77 @@ STRINGS = {
         "en": "No perturbations added yet — click “＋ Add Perturbation” to model a biological impairment.",
         "tr": "Henüz bozulma eklenmedi — bir biyolojik bozulmayı modellemek için “＋ Bozulma Ekle”ye tıklayın.",
     },
-    "caption_combined_severity": {
-        "en": "Combined severity: {pct}%",
-        "tr": "Birleşik şiddet: {pct}%",
+    "caption_velocity_severity": {
+        "en": "Conduction-velocity channel (Tau, Amyloid): {n_targeted}/{n_total} edges affected (mean severity {pct}%)",
+        "tr": "İletim hızı kanalı (Tau, Amiloid): {n_targeted}/{n_total} bağlantı etkilendi (ortalama şiddet %{pct})",
+    },
+    "caption_threshold_severity": {
+        "en": "Firing-threshold channel (GABA, APL): {n_targeted}/{n_total} neurons affected (mean severity {pct}%)",
+        "tr": "Ateşleme eşiği kanalı (GABA, APL): {n_targeted}/{n_total} nöron etkilendi (ortalama şiddet %{pct})",
+    },
+    "label_apl_root_ids": {
+        "en": "APL target root_id(s) (comma-separated)",
+        "tr": "APL hedef root_id('leri) (virgülle ayrılmış)",
+    },
+    "help_apl_root_ids": {
+        "en": (
+            "APL has no dedicated label in Codex's classification export — look it up by "
+            "name on codex.flywire.ai and paste its root_id here. Without one, this "
+            "perturbation currently has zero effect (see mbsim/targeting.py)."
+        ),
+        "tr": (
+            "APL, Codex'in sınıflandırma dışa aktarımında ayrı bir etikete sahip değildir — "
+            "codex.flywire.ai'de ada göre arayıp root_id'sini buraya yapıştırın. Girilmezse "
+            "bu bozulmanın şu anda hiçbir etkisi olmaz (bkz. mbsim/targeting.py)."
+        ),
     },
     "perturbation_tau": {"en": "Tau Protein", "tr": "Tau Proteini"},
     "perturbation_tau_desc": {
-        "en": "Hyperphosphorylated tau tangles disrupting axonal transport.",
-        "tr": "Aksonal taşımayı bozan hiperfosforile tau yumakları.",
+        "en": (
+            "Hyperphosphorylated tau tangles disrupting axonal transport — "
+            "modeled as reduced conduction velocity."
+        ),
+        "tr": (
+            "Aksonal taşımayı bozan hiperfosforile tau yumakları — "
+            "azalmış iletim hızı olarak modellenir."
+        ),
     },
     "perturbation_amyloid": {"en": "Beta-Amyloid", "tr": "Beta-Amiloid"},
     "perturbation_amyloid_desc": {
-        "en": "Amyloid-beta plaque buildup impairing synaptic transmission.",
-        "tr": "Sinaptik iletimi bozan amiloid-beta plak birikimi.",
+        "en": (
+            "Amyloid-beta plaque buildup impairing synaptic transmission — "
+            "modeled as reduced conduction velocity."
+        ),
+        "tr": (
+            "Sinaptik iletimi bozan amiloid-beta plak birikimi — "
+            "azalmış iletim hızı olarak modellenir."
+        ),
     },
     "perturbation_gaba": {"en": "GABA Dysfunction", "tr": "GABA İşlev Bozukluğu"},
     "perturbation_gaba_desc": {
-        "en": "Reduced inhibitory GABAergic signaling in the Mushroom Body circuit.",
-        "tr": "Mantar Cisimciği devresinde azalmış inhibitör GABAerjik sinyalleşme.",
+        "en": (
+            "Reduced inhibitory GABAergic signaling in the Mushroom Body circuit — "
+            "modeled as an increased firing threshold (a noisier baseline a signal "
+            "must clear), not a velocity change."
+        ),
+        "tr": (
+            "Mantar Cisimciği devresinde azalmış inhibitör GABAerjik sinyalleşme — "
+            "iletim hızı değişimi değil, artmış ateşleme eşiği (bir sinyalin geçmesi "
+            "gereken daha gürültülü bir taban çizgisi) olarak modellenir."
+        ),
     },
     "perturbation_apl": {"en": "APL Neuron Impairment", "tr": "APL Nöron Bozulması"},
     "perturbation_apl_desc": {
-        "en": "Weakened Anterior Paired Lateral neuron feedback inhibition.",
-        "tr": "Zayıflamış Anterior Paired Lateral nöron geri besleme inhibisyonu.",
+        "en": (
+            "Weakened Anterior Paired Lateral neuron feedback inhibition — "
+            "modeled as an increased firing threshold (a noisier baseline a signal "
+            "must clear), not a velocity change."
+        ),
+        "tr": (
+            "Zayıflamış Anterior Paired Lateral nöron geri besleme inhibisyonu — "
+            "iletim hızı değişimi değil, artmış ateşleme eşiği (bir sinyalin geçmesi "
+            "gereken daha gürültülü bir taban çizgisi) olarak modellenir."
+        ),
     },
     # Perception & Delay tab
     "tab_perception": {"en": "Perception & Delay", "tr": "Algı ve Gecikme"},
@@ -216,9 +291,61 @@ STRINGS = {
     },
     "metric_deviation_pct": {"en": "Time perception deviation", "tr": "Zaman algısı sapması"},
     "header_calibration": {"en": "Calibration (placeholder)", "tr": "Kalibrasyon (yer tutucu)"},
+    "caption_calibration_source": {
+        "en": (
+            "Default sourced from mbsim/calibration.py (a literature-anchored placeholder, "
+            "not a measurement) — override below for what-if exploration. Replace the "
+            "module once Phase 2 lab timing data is available."
+        ),
+        "tr": (
+            "Varsayılan değer mbsim/calibration.py'den alınır (literatüre dayanan bir yer "
+            "tutucu, bir ölçüm değil) — ne-olur-ne-olmaz keşfi için aşağıdan geçersiz kılın. "
+            "Faz 2 laboratuvar zamanlama verisi elde edildiğinde bu modülü değiştirin."
+        ),
+    },
     "label_ms_calibration": {
         "en": "Milliseconds per simulated time unit",
         "tr": "Simüle edilmiş zaman birimi başına milisaniye",
+    },
+    "header_trials": {
+        "en": "Trial-based Weber fraction estimate (Monte Carlo)",
+        "tr": "Deneme-tabanlı Weber kesri tahmini (Monte Carlo)",
+    },
+    "caption_trials": {
+        "en": (
+            "The point-estimate deviation above compares one healthy run to one damaged run. "
+            "A Weber fraction is properly a variability measure across *repeated* trials — "
+            "this runs N independent noisy trials per side and reports the coefficient of "
+            "variation (std/mean arrival time) as an empirical Weber-fraction-like estimate. "
+            "The noise model is a placeholder (see mbsim/trials.py), not literature-calibrated."
+        ),
+        "tr": (
+            "Yukarıdaki nokta-tahmini sapma, bir sağlıklı çalıştırmayı bir hasarlı "
+            "çalıştırmayla karşılaştırır. Weber kesri asıl olarak *tekrarlanan* denemeler "
+            "arasındaki bir değişkenlik ölçüsüdür — bu, her taraf için N bağımsız gürültülü "
+            "deneme çalıştırır ve değişim katsayısını (std/ortalama varış zamanı) ampirik bir "
+            "Weber-kesri-benzeri tahmin olarak bildirir. Gürültü modeli bir yer tutucudur "
+            "(bkz. mbsim/trials.py), literatüre göre kalibre edilmemiştir."
+        ),
+    },
+    "label_n_trials": {"en": "Number of trials", "tr": "Deneme sayısı"},
+    "label_noise_std": {"en": "Noise (log-std)", "tr": "Gürültü (log-std)"},
+    "btn_run_trials": {"en": "▶ Run trials", "tr": "▶ Denemeleri çalıştır"},
+    "spinner_running_trials": {
+        "en": "Running noisy trials — this can take a while on large graphs...",
+        "tr": "Gürültülü denemeler çalıştırılıyor — büyük graflarda biraz zaman alabilir...",
+    },
+    "metric_healthy_weber_fraction": {
+        "en": "Healthy Weber fraction (empirical)",
+        "tr": "Sağlıklı Weber kesri (ampirik)",
+    },
+    "metric_damaged_weber_fraction": {
+        "en": "Damaged Weber fraction (empirical)",
+        "tr": "Hasarlı Weber kesri (ampirik)",
+    },
+    "caption_trials_not_run": {
+        "en": "Not run yet — click “▶ Run trials” above.",
+        "tr": "Henüz çalıştırılmadı — yukarıdan “▶ Denemeleri çalıştır”a tıklayın.",
     },
     "info_zero_severity": {
         "en": "No active perturbations — healthy and damaged curves are identical, so 0% deviation is expected here, not a bug.",

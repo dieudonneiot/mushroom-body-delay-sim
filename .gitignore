@@ -1,5 +1,11 @@
 data/raw/*
 !data/raw/README.md
+data/lab/*
+!data/lab/README.md
+!data/lab/*.template.csv
+data/clinical/*
+!data/clinical/README.md
+!data/clinical/*.template.csv
 *.egg-info/
 __pycache__/
 *.pyc

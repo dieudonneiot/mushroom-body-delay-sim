@@ -42,3 +42,32 @@ def test_lower_conduction_velocity_increases_delay():
     slow = simulate(graph, ["PN1", "PN2", "PN3"], conduction_velocity=0.5, threshold=1.0)
     for node in ("KC1", "MBON1", "MBON2"):
         assert slow[node] > fast[node]
+
+
+def test_edge_velocity_override_only_affects_that_edge():
+    graph = _fixture_graph()
+    baseline = simulate(graph, ["PN1", "PN2", "PN3"], conduction_velocity=1.0, threshold=1.0)
+    overridden = simulate(
+        graph,
+        ["PN1", "PN2", "PN3"],
+        conduction_velocity=1.0,
+        threshold=1.0,
+        edge_velocity={("PN1", "KC1"): 0.1},
+    )
+    assert overridden["KC1"] > baseline["KC1"]
+    # KC2 is reached via a different edge (PN1->KC2, not overridden) — unaffected.
+    assert overridden["KC2"] == baseline["KC2"]
+
+
+def test_node_threshold_override_only_delays_that_node():
+    graph = _fixture_graph()
+    baseline = simulate(graph, ["PN1", "PN2", "PN3"], conduction_velocity=1.0, threshold=1.0)
+    overridden = simulate(
+        graph,
+        ["PN1", "PN2", "PN3"],
+        conduction_velocity=1.0,
+        threshold=1.0,
+        node_threshold={"MBON1": 2.0},
+    )
+    assert overridden["MBON1"] > baseline["MBON1"]
+    assert overridden["MBON2"] == baseline["MBON2"]

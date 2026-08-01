@@ -17,9 +17,13 @@ simulation:
   threshold: 1.0
 
 damage:
-  # Placeholder severity in [0, 1]; swap in a literature-derived value/function
-  # once the medical team provides one (see mbsim/damage.py).
-  severity: 0.3
+  # Stack any of tau/amyloid (conduction-velocity channel) or gaba/apl
+  # (firing-threshold channel) — same mechanism split as the Streamlit app's
+  # "+ Add Perturbation" panel. Empty list = healthy baseline. See
+  # mbsim/perturbations.py and mbsim/damage.py for the placeholder curves
+  # these intensities feed into, pending the medical team's literature values.
+  perturbations:
+    - {type: tau, intensity: 30.0}
 
 output:
   dir: outputs

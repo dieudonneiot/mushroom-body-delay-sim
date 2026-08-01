@@ -25,7 +25,7 @@ N_ANIMATION_FRAMES = 40
 
 
 def _role_label(role: str | None, lang: str) -> str:
-    if role in ("input", "relay", "output"):
+    if role in ("input", "relay", "output", "modulatory"):
         return t(f"role_{role}", lang)
     return t("role_unknown", lang)
 
@@ -200,6 +200,111 @@ def build_network_figure(
     return fig
 
 
+def _delta_node_traces(
+    graph: nx.DiGraph,
+    healthy_fire_times: dict[str, float],
+    damaged_fire_times: dict[str, float],
+    pos: dict,
+    lang: str,
+) -> list[go.Scattergl]:
+    size = marker_size(graph.number_of_nodes())
+    show_text = show_node_labels(graph.number_of_nodes())
+    reached = [n for n in graph.nodes if n in healthy_fire_times and n in damaged_fire_times]
+    unreached = [n for n in graph.nodes if n not in healthy_fire_times or n not in damaged_fire_times]
+    deltas = {n: damaged_fire_times[n] - healthy_fire_times[n] for n in reached}
+    # A zero-range color scale (every delta identical, e.g. an all-healthy run)
+    # would otherwise divide by zero inside Plotly's color mapping.
+    max_abs_delta = max((abs(d) for d in deltas.values()), default=0.0) or 1.0
+
+    traces = []
+    if reached:
+        traces.append(
+            go.Scattergl(
+                x=[pos[n][0] for n in reached],
+                y=[pos[n][1] for n in reached],
+                mode="markers+text" if show_text else "markers",
+                text=reached,
+                textposition="top center",
+                textfont=dict(size=9),
+                marker=dict(
+                    size=size,
+                    color=[deltas[n] for n in reached],
+                    # RdBu_r: negative (damaged arrived sooner) -> blue, positive
+                    # (damaged arrived later, the expected direction of damage) ->
+                    # red, zero -> white. Confirmed direction, not assumed — Plotly's
+                    # plain "RdBu" runs the opposite way (low=red, high=blue).
+                    colorscale="RdBu_r",
+                    cmin=-max_abs_delta,
+                    cmax=max_abs_delta,
+                    colorbar=dict(title=t("colorbar_delay_delta", lang)),
+                    line=dict(width=1 if show_text else 0.3, color="white"),
+                ),
+                hovertext=[
+                    _node_hover_text(graph, n, lang, healthy_fire_times[n])
+                    + f"<br>{t('hover_damaged_time', lang)}: {damaged_fire_times[n]:.4f}"
+                    + f"<br>{t('hover_delay_delta', lang)}: {deltas[n]:+.4f}"
+                    for n in reached
+                ],
+                hoverinfo="text",
+                showlegend=False,
+            )
+        )
+    if unreached:
+        traces.append(
+            go.Scattergl(
+                x=[pos[n][0] for n in unreached],
+                y=[pos[n][1] for n in unreached],
+                mode="markers+text" if show_text else "markers",
+                text=unreached,
+                textposition="top center",
+                textfont=dict(size=9),
+                marker=dict(size=size, color="#cccccc", line=dict(width=1 if show_text else 0.3, color="white")),
+                name=t("legend_not_reached", lang),
+                hovertext=[_node_hover_text(graph, n, lang) for n in unreached],
+                hoverinfo="text",
+            )
+        )
+    return traces
+
+
+def build_delay_delta_figure(
+    graph: nx.DiGraph,
+    healthy_fire_times: dict[str, float],
+    damaged_fire_times: dict[str, float],
+    title: str = "",
+    lang: str = "en",
+) -> go.Figure:
+    """Single network figure colored by (damaged - healthy) arrival time per
+    node, on a diverging scale centered at zero — answers "where does the
+    damage actually show up, and by how much" directly, instead of asking the
+    viewer to mentally diff two separate healthy/damaged plots. Built to fix a
+    concrete failure: on a real-connectome-sized graph, two side-by-side
+    absolute-arrival-time plots (`build_network_figure` x2) put nearly every
+    node in the same dark, near-zero color because a handful of straggler
+    nodes stretch the shared color scale out to their arrival time — crushing
+    the real variation most nodes actually show into indistinguishable pixels.
+    A delta view isn't subject to that: its scale is set by the *spread* of
+    the effect, not by how late the single slowest node fires.
+    """
+    pos = layered_layout(graph)
+    edge_traces = _edge_traces(graph, pos)
+    node_traces = _delta_node_traces(graph, healthy_fire_times, damaged_fire_times, pos, lang)
+
+    fig = go.Figure(data=edge_traces + node_traces)
+    fig.update_layout(
+        title=title,
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(color="#222222"),
+        height=550,
+        margin=dict(l=10, r=10, t=50, b=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    )
+    return fig
+
+
 def build_weber_fechner_figure(
     t_values,
     healthy,
@@ -239,7 +344,7 @@ def build_weber_fechner_figure(
     return fig
 
 
-_ROLE_ORDER = ("input", "relay", "output")
+_ROLE_ORDER = ("input", "relay", "output", "modulatory")
 
 
 def _nodes_by_role(graph: nx.DiGraph) -> dict[str, list[str]]:
@@ -361,8 +466,13 @@ def build_propagation_animation(
     for i, tau in enumerate(frame_taus):
         h_traces = _propagation_frame_traces(nodes_by_role, pos, healthy_fire_times, tau, size)
         d_traces = _propagation_frame_traces(nodes_by_role, pos, damaged_fire_times, tau, size)
-        h_count = sum(len(tr["x"]) for tr in h_traces[:3])
-        d_count = sum(len(tr["x"]) for tr in d_traces[:3])
+        # First len(_ROLE_ORDER) traces are the per-role active traces (see
+        # _propagation_frame_traces); the trailing one is the shared inactive/gray
+        # trace, which must not count toward "fired". Slicing by len(_ROLE_ORDER)
+        # rather than a hardcoded 3 keeps this correct if a role is ever added
+        # (e.g. "modulatory" for a manually-targeted neuron like APL).
+        h_count = sum(len(tr["x"]) for tr in h_traces[: len(_ROLE_ORDER)])
+        d_count = sum(len(tr["x"]) for tr in d_traces[: len(_ROLE_ORDER)])
         status_text = _propagation_status_text(lang, tau, h_count, d_count, total_nodes)
         if i == 0:
             initial_title = status_text

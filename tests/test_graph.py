@@ -27,3 +27,23 @@ def test_fixture_graph_node_and_edge_counts():
 def test_edges_carry_synapse_count_weight():
     graph = _build_fixture_graph()
     assert graph.edges["PN1", "KC1"]["weight"] == 12
+
+
+def test_edges_carry_nt_type_for_targeting():
+    """nt_type must survive into the graph so mbsim.targeting can resolve
+    GABA-specific perturbations to real edges instead of the whole graph."""
+    graph = _build_fixture_graph()
+    assert graph.edges["PN1", "KC1"]["nt_type"] == "ACH"
+
+
+def test_extra_node_ids_force_includes_an_otherwise_unclassified_neuron():
+    """APL (and similar neurons with no dedicated classification label) must be
+    forceable into the subgraph via extra_node_ids, or no perturbation could
+    ever target its edges — see mbsim.targeting's module docstring."""
+    connections, classification = load_raw_data(FIXTURE_DIR)
+    # "KC1" already exists in the fixture; simulate forcing in an id that
+    # wouldn't otherwise match any configured role.
+    edge_df, node_roles = extract_mb_subgraph(
+        connections, classification, {"input": ["PN"], "output": ["MBON"]}, extra_node_ids=["KC1"]
+    )
+    assert node_roles["KC1"] == "modulatory"

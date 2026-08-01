@@ -9,14 +9,21 @@ from pathlib import Path
 import streamlit as st
 
 from mbsim import io as mbio
-from mbsim.damage import linear_slowdown
+from mbsim.calibration import ms_per_time_unit as default_ms_per_time_unit
+from mbsim.damage import linear_slowdown, linear_threshold_increase
 from mbsim.graph import build_graph, sanity_report
 from mbsim.i18n import t
 from mbsim.metrics import compare
 from mbsim.mushroom_body import extract_mb_subgraph
 from mbsim.perception import time_perception_deviation
-from mbsim.perturbations import PERTURBATION_TYPES, combined_severity
-from mbsim.plotly_viz import build_network_figure, build_propagation_animation, build_weber_fechner_figure
+from mbsim.perturbations import PERTURBATION_TYPES, per_edge_velocity_severity, per_node_threshold_severity
+from mbsim.plotly_viz import (
+    build_delay_delta_figure,
+    build_network_figure,
+    build_propagation_animation,
+    build_weber_fechner_figure,
+)
+from mbsim.trials import compare_trials
 
 st.set_page_config(page_title="Mushroom Body Delay Simulator", page_icon="🧠", layout="wide")
 
@@ -41,9 +48,11 @@ def load_connectome(data_mode, connections_bytes, classification_bytes):
 
 
 @st.cache_data(show_spinner="Building Mushroom Body graph...")
-def build_mb_graph(connections, classification, roles_key):
+def build_mb_graph(connections, classification, roles_key, extra_node_ids_key=()):
     roles = {role: list(cell_types) for role, cell_types in roles_key}
-    edge_df, node_roles = extract_mb_subgraph(connections, classification, roles)
+    edge_df, node_roles = extract_mb_subgraph(
+        connections, classification, roles, extra_node_ids=list(extra_node_ids_key)
+    )
     graph = build_graph(edge_df, node_roles)
     report = sanity_report(graph)
     return graph, report, node_roles
@@ -191,19 +200,35 @@ with st.sidebar:
                 )
             entry["intensity"] = st.session_state[slider_key]
 
+            if entry["type"] == "apl":
+                root_ids_str = st.text_input(
+                    t("label_apl_root_ids", lang),
+                    value=",".join(entry.get("target_root_ids", [])),
+                    key=f"pert_root_ids_{pid}",
+                    help=t("help_apl_root_ids", lang),
+                )
+                entry["target_root_ids"] = [rid.strip() for rid in root_ids_str.split(",") if rid.strip()]
+
     if remove_id is not None:
         st.session_state.perturbations = [e for e in st.session_state.perturbations if e["id"] != remove_id]
         st.rerun()
 
-    severity = combined_severity(st.session_state.perturbations)
-    st.caption(t("caption_combined_severity", lang, pct=f"{severity * 100:.1f}"))
-    st.progress(min(severity, 1.0))
-    if severity >= 0.95:
-        st.warning(t("warn_high_severity", lang))
+    # Every perturbation's target_root_ids (currently only APL uses this) must be
+    # force-included in the extracted subgraph below, or targeting.resolve_targets
+    # would never see that neuron's edges at all — see mushroom_body.py's
+    # extra_node_ids parameter.
+    extra_node_ids = sorted(
+        {rid for entry in st.session_state.perturbations for rid in entry.get("target_root_ids", [])}
+    )
 
     with st.expander(t("header_calibration", lang)):
+        st.caption(t("caption_calibration_source", lang))
         ms_per_time_unit = st.number_input(
-            t("label_ms_calibration", lang), min_value=0.1, max_value=1000.0, value=5.0, step=0.1
+            t("label_ms_calibration", lang),
+            min_value=0.1,
+            max_value=1000.0,
+            value=default_ms_per_time_unit(),
+            step=0.1,
         )
 
 if not input_types or not relay_types or not output_types:
@@ -216,7 +241,7 @@ roles_key = tuple(
 )
 
 try:
-    graph, report, node_roles = build_mb_graph(connections, classification, roles_key)
+    graph, report, node_roles = build_mb_graph(connections, classification, roles_key, tuple(extra_node_ids))
 except Exception as exc:
     st.error(t("err_build_graph", lang, error=exc))
     st.stop()
@@ -228,14 +253,16 @@ if not input_nodes or not output_nodes:
     st.warning(t("warn_no_input_output", lang))
     st.stop()
 
+perturbations = st.session_state.perturbations
 result = compare(
     graph,
     input_nodes,
     output_nodes,
     base_conduction_velocity=conduction_velocity,
     threshold=threshold,
-    severity=severity,
+    perturbations=perturbations,
     slowdown_fn=linear_slowdown,
+    threshold_fn=linear_threshold_increase,
 )
 
 st.caption(
@@ -247,6 +274,32 @@ st.caption(
         role_counts=format_role_counts(report["role_counts"], lang),
     )
 )
+
+edge_severity = per_edge_velocity_severity(graph, perturbations)
+node_severity = per_node_threshold_severity(graph, perturbations)
+mean_edge_severity = sum(edge_severity.values()) / len(edge_severity) if edge_severity else 0.0
+mean_node_severity = sum(node_severity.values()) / len(node_severity) if node_severity else 0.0
+
+st.caption(
+    t(
+        "caption_velocity_severity",
+        lang,
+        n_targeted=len(edge_severity),
+        n_total=report["n_edges"],
+        pct=f"{mean_edge_severity * 100:.1f}",
+    )
+)
+st.caption(
+    t(
+        "caption_threshold_severity",
+        lang,
+        n_targeted=len(node_severity),
+        n_total=report["n_nodes"],
+        pct=f"{mean_node_severity * 100:.1f}",
+    )
+)
+if (max(edge_severity.values(), default=0.0)) >= 0.95 or (max(node_severity.values(), default=0.0)) >= 0.95:
+    st.warning(t("warn_high_severity", lang))
 
 tab_perception, tab_network, tab_comparison, tab_data, tab_propagation = st.tabs(
     [
@@ -293,13 +346,53 @@ with tab_perception:
             )
             st.metric(t("metric_deviation_pct", lang), f"{perception['pct_deviation']:.1f}%")
 
-        if severity == 0:
+        if not edge_severity and not node_severity:
             st.info(t("info_zero_severity", lang))
+
+    with st.expander(t("header_trials", lang)):
+        st.caption(t("caption_trials", lang))
+        tcol1, tcol2, tcol3 = st.columns([1, 1, 1])
+        with tcol1:
+            n_trials = st.number_input(t("label_n_trials", lang), min_value=5, max_value=200, value=30, step=5)
+        with tcol2:
+            noise_std = st.slider(t("label_noise_std", lang), 0.0, 0.5, 0.1, 0.01)
+        with tcol3:
+            st.write("")
+            run_clicked = st.button(t("btn_run_trials", lang))
+
+        if run_clicked:
+            with st.spinner(t("spinner_running_trials", lang)):
+                st.session_state["trials_result"] = compare_trials(
+                    graph,
+                    input_nodes,
+                    output_nodes,
+                    base_conduction_velocity=conduction_velocity,
+                    threshold=threshold,
+                    perturbations=perturbations,
+                    n_trials=int(n_trials),
+                    noise_std=noise_std,
+                    slowdown_fn=linear_slowdown,
+                    threshold_fn=linear_threshold_increase,
+                    seed=0,
+                )
+
+        trials_result = st.session_state.get("trials_result")
+        if trials_result is not None:
+            hwf, dwf = trials_result["healthy_weber_fraction"], trials_result["damaged_weber_fraction"]
+            wcol1, wcol2 = st.columns(2)
+            wcol1.metric(
+                t("metric_healthy_weber_fraction", lang), f"{hwf * 100:.1f}%" if hwf is not None else "n/a"
+            )
+            wcol2.metric(
+                t("metric_damaged_weber_fraction", lang), f"{dwf * 100:.1f}%" if dwf is not None else "n/a"
+            )
+        else:
+            st.caption(t("caption_trials_not_run", lang))
 
 with tab_network:
     if result.df.empty:
         st.warning(t("warn_signal_not_reached", lang))
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric(
         t("metric_mean_dev", lang),
         f"{result.summary['mean_pct_deviation']:.1f}%" if result.summary["mean_pct_deviation"] is not None else "n/a",
@@ -308,32 +401,50 @@ with tab_network:
         t("metric_median_dev", lang),
         f"{result.summary['median_pct_deviation']:.1f}%" if result.summary["median_pct_deviation"] is not None else "n/a",
     )
-    col3.metric(t("metric_damaged_velocity", lang), f"{result.summary['damaged_conduction_velocity']:.3f}")
+    mean_velocity = result.summary["mean_targeted_damaged_velocity"]
+    col3.metric(
+        t("metric_damaged_velocity", lang),
+        f"{mean_velocity:.3f}" if mean_velocity is not None else "n/a",
+    )
+    mean_threshold = result.summary["mean_targeted_damaged_threshold"]
     col4.metric(
+        t("metric_damaged_threshold", lang),
+        f"{mean_threshold:.3f}" if mean_threshold is not None else "n/a",
+    )
+    col5.metric(
         t("metric_outputs_reached", lang),
         f"{result.summary['n_output_nodes_reached']}/{result.summary['n_output_nodes_total']}",
     )
 
-    shared_vmax = max(
-        max(result.healthy_fire_times.values(), default=0.0),
-        max(result.damaged_fire_times.values(), default=0.0),
+    st.caption(t("caption_delta_chart", lang))
+    st.plotly_chart(
+        build_delay_delta_figure(
+            graph, result.healthy_fire_times, result.damaged_fire_times, t("chart_delta_title", lang), lang
+        ),
+        use_container_width=True,
     )
 
-    net_col1, net_col2 = st.columns(2)
-    with net_col1:
-        st.plotly_chart(
-            build_network_figure(
-                graph, result.healthy_fire_times, t("chart_healthy_network", lang), shared_vmax, lang
-            ),
-            use_container_width=True,
+    with st.expander(t("expander_absolute_times", lang)):
+        shared_vmax = max(
+            max(result.healthy_fire_times.values(), default=0.0),
+            max(result.damaged_fire_times.values(), default=0.0),
         )
-    with net_col2:
-        st.plotly_chart(
-            build_network_figure(
-                graph, result.damaged_fire_times, t("chart_damaged_network", lang), shared_vmax, lang
-            ),
-            use_container_width=True,
-        )
+
+        net_col1, net_col2 = st.columns(2)
+        with net_col1:
+            st.plotly_chart(
+                build_network_figure(
+                    graph, result.healthy_fire_times, t("chart_healthy_network", lang), shared_vmax, lang
+                ),
+                use_container_width=True,
+            )
+        with net_col2:
+            st.plotly_chart(
+                build_network_figure(
+                    graph, result.damaged_fire_times, t("chart_damaged_network", lang), shared_vmax, lang
+                ),
+                use_container_width=True,
+            )
 
     with st.expander(t("expander_structure", lang)):
         st.plotly_chart(

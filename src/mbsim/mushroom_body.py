@@ -21,10 +21,23 @@ def extract_mb_subgraph(
     connections: pd.DataFrame,
     classification: pd.DataFrame,
     roles: dict[str, list[str]],
+    extra_node_ids: list[str] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, str]]:
-    """Return (edge_df, node_roles) restricted to neurons whose cell_type is in `roles`.
+    """Return (edge_df, node_roles) restricted to neurons whose cell_type is in `roles`,
+    plus any `extra_node_ids` force-included with role "modulatory".
 
-    edge_df columns: pre_id, post_id, syn_count, pre_role, post_role.
+    `extra_node_ids` exists for neurons the bulk classification export can't
+    identify by `class`/`sub_class` at all — e.g. APL (Anterior Paired
+    Lateral), which has no dedicated label in the real Codex export (see
+    `targeting.py`'s module docstring) and would otherwise be silently
+    dropped here even if you know its root_id from codex.flywire.ai's name
+    search. Without forcing it in, no perturbation could ever target its
+    edges, since `targeting.resolve_targets` only sees edges between nodes
+    that made it into this subgraph.
+
+    edge_df columns: pre_id, post_id, syn_count, pre_role, post_role, plus
+    nt_type/neuropil if present in `connections` (both are in the real Codex
+    "Connections (Filtered)" export and the bundled demo fixture).
     node_roles: {root_id: role_name} for every neuron kept.
     """
     cell_type_to_role = _invert_roles(roles)
@@ -33,6 +46,9 @@ def extract_mb_subgraph(
     node_roles = {
         row.root_id: cell_type_to_role[row.cell_type] for row in relevant.itertuples()
     }
+    for node_id in extra_node_ids or []:
+        node_roles.setdefault(node_id, "modulatory")
+
     if not node_roles:
         raise ValueError(
             f"No neurons matched configured roles {roles}. "
@@ -49,5 +65,6 @@ def extract_mb_subgraph(
     edges["pre_role"] = edges["pre_id"].map(node_roles)
     edges["post_role"] = edges["post_id"].map(node_roles)
 
-    columns = ["pre_id", "post_id", "syn_count", "pre_role", "post_role"]
+    optional_columns = [c for c in ("nt_type", "neuropil") if c in connections.columns]
+    columns = ["pre_id", "post_id", "syn_count", "pre_role", "post_role"] + optional_columns
     return edges[columns].reset_index(drop=True), node_roles

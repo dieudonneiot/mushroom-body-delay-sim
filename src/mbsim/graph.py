@@ -10,8 +10,14 @@ def build_graph(edge_df: pd.DataFrame, node_roles: dict[str, str]) -> nx.DiGraph
     graph = nx.DiGraph()
     for node_id, role in node_roles.items():
         graph.add_node(node_id, role=role)
+    # nt_type/neuropil are optional (present in the real Codex export and the
+    # demo fixture, but not required by mbsim.io) — carried through as edge
+    # attributes so mbsim.targeting can resolve perturbations like GABA to
+    # the specific edges they biologically affect, instead of the whole graph.
+    optional_attrs = [c for c in ("nt_type", "neuropil") if c in edge_df.columns]
     for row in edge_df.itertuples():
-        graph.add_edge(row.pre_id, row.post_id, weight=int(row.syn_count))
+        attrs = {attr: getattr(row, attr) for attr in optional_attrs}
+        graph.add_edge(row.pre_id, row.post_id, weight=int(row.syn_count), **attrs)
     return graph
 
 

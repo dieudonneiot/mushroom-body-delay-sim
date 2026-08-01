@@ -4,7 +4,7 @@ import hashlib
 
 import networkx as nx
 
-ROLE_COLORS = {"input": "#2ca02c", "relay": "#1f77b4", "output": "#ff7f0e"}
+ROLE_COLORS = {"input": "#2ca02c", "relay": "#1f77b4", "output": "#ff7f0e", "modulatory": "#9467bd"}
 DEFAULT_ROLE_COLOR = "#999999"
 COLUMN_BAND_WIDTH = 0.35
 

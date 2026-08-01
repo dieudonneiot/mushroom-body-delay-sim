@@ -210,14 +210,54 @@ change, without touching code:
 
 ### 5. Extending with a real damage model
 
-`src/mbsim/damage.py` has one placeholder slowdown function (`linear_slowdown`:
-velocity reduction scales linearly with severity in [0, 1]). Once the medical
-team provides a literature-derived function (severity -> conduction velocity
-reduction), write it there and pass it as `slowdown_fn` to
-`mbsim.metrics.compare(...)` (already wired into both `app.py` and `cli.py`) —
-no changes needed anywhere else in the pipeline.
+Each perturbation (Tau, Amyloid, GABA, APL) is resolved to the *specific*
+edges/neurons it plausibly affects before any damage is applied — see
+`src/mbsim/targeting.py`'s module docstring for exactly which connectome
+field each one uses (Tau/Amyloid default to every edge; GABA targets edges
+whose real Codex `nt_type` is `"GABA"`; APL has no default at all, since it
+has no dedicated label in the classification export — target it via a
+`target_root_ids` root_id looked up by name on codex.flywire.ai). Two
+independent channels come out of that: conduction-velocity severity per
+edge and firing-threshold severity per node (see `src/mbsim/perturbations.py`).
 
-### 6. Tests & verifying everything end-to-end
+`src/mbsim/damage.py` has the two placeholder curves that turn those
+severities into actual numbers: `linear_slowdown` (velocity reduction) and
+`linear_threshold_increase` (threshold increase), both linear in [0, 1].
+Once the medical team provides literature-derived functions (severity ->
+reduction), write them there and pass as `slowdown_fn`/`threshold_fn` to
+`mbsim.metrics.compare(...)` (already wired into both `app.py` and `cli.py`)
+— no changes needed anywhere else in the pipeline.
+
+`src/mbsim/calibration.py` holds the one placeholder constant converting the
+simulation's abstract time units to milliseconds — replace its body once
+real timing data (Phase 2 lab measurements, or a literature figure) exists.
+
+### 6. Trial-based Weber fraction estimate
+
+A single healthy-vs-damaged comparison is a point estimate, not the
+variability-across-trials that a Weber fraction actually measures.
+`src/mbsim/trials.py`'s `compare_trials` runs N independent noisy trials per
+side (placeholder log-normal jitter on conduction velocity — see its module
+docstring) and reports the coefficient of variation (std/mean arrival time)
+as an empirical Weber-fraction-like number for each condition. In the app,
+open the "Trial-based Weber fraction estimate" expander in the Perception
+tab and click "▶ Run trials" (gated behind a button since it's ~10-15s on
+the full real connectome, not instant like the rest of the UI).
+
+### 7. Validating against Phase 2/3 data, once it exists
+
+`src/mbsim/validation.py` compares the simulation's %-deviation against the
+Phase 2 fly climbing-assay %-deviation and/or the Phase 3 human time-
+perception-task deviation, reporting whether each empirical source moved in
+the *same direction* as the simulation — the project's actual validation
+goal (see the module's docstring), not an exact percentage match. Neither
+data source exists yet; `data/lab/README.md` and `data/clinical/README.md`
+document the expected CSV shape (with empty `.template.csv` files) so
+whoever exports that data later knows the format, and `validation.py`'s own
+tests exercise the comparison logic now against synthetic data shaped the
+same way.
+
+### 8. Tests & verifying everything end-to-end
 
 Automated:
 
@@ -259,8 +299,13 @@ src/mbsim/
   mushroom_body.py        # filter to the configured input/relay/output pathway
   graph.py                # NetworkX graph construction + sanity checks
   simulation.py           # event-driven signal propagation
-  damage.py               # severity -> conduction velocity slowdown (pluggable)
+  targeting.py            # resolve each perturbation to the specific edges/neurons it affects
+  perturbations.py        # named impairments (Tau/Amyloid/GABA/APL) -> per-edge/per-node severity
+  damage.py               # severity -> conduction velocity slowdown / firing threshold increase (pluggable)
+  calibration.py          # simulated time units -> milliseconds (pluggable)
   metrics.py              # healthy vs. damaged comparison + % deviation
+  trials.py               # Monte Carlo trial-to-trial variability -> empirical Weber fraction
+  validation.py           # compare simulation output against Phase 2/3 empirical data
   layout.py               # shared node layout / role colors / large-graph scaling
   visualize.py            # static matplotlib figures (used by the CLI)
   plotly_viz.py           # interactive Plotly figures + propagation animation (used by the app)
@@ -270,6 +315,8 @@ configs/default.yaml      # CLI configuration (fixture data, PN/KC/MBON roles)
 configs/raw.yaml          # CLI configuration for real data (ALPN/Kenyon_Cell/MBON roles)
 data/fixtures/            # synthetic demo data (tracked in git)
 data/raw/                 # real Codex export goes here (gitignored)
+data/lab/                 # Phase 2 fly assay results go here, once collected (gitignored)
+data/clinical/            # Phase 3 human task results go here, once collected (gitignored)
 tests/                    # pytest suite
 ```
 
@@ -458,14 +505,56 @@ Koda dokunmadan değiştirmek için `configs/default.yaml` dosyasını (veya
 
 ### 5. Gerçek bir hasar modeliyle genişletme
 
-`src/mbsim/damage.py` içinde tek bir yer tutucu yavaşlatma fonksiyonu bulunur
-(`linear_slowdown`: hız azalması [0, 1] aralığında şiddetle doğrusal olarak
-ölçeklenir). Tıp ekibi literatüre dayalı bir fonksiyon sağladığında (şiddet ->
-iletim hızı azalması), bunu oraya yazın ve `mbsim.metrics.compare(...)`
-fonksiyonuna `slowdown_fn` olarak geçirin (hem `app.py` hem de `cli.py`'de zaten
-bağlanmıştır) — işlem hattının başka hiçbir yerinde değişiklik gerekmez.
+Her bozulma (Tau, Amiloid, GABA, APL), herhangi bir hasar uygulanmadan önce
+gerçekten etkileyebileceği *belirli* bağlantılara/nöronlara çözümlenir —
+hangi konektom alanının kullanıldığı için `src/mbsim/targeting.py`'nin modül
+docstring'ine bakın (Tau/Amiloid varsayılan olarak her bağlantıyı hedefler;
+GABA, gerçek Codex `nt_type` değeri `"GABA"` olan bağlantıları hedefler;
+APL'nin hiçbir varsayılanı yoktur, çünkü sınıflandırma dışa aktarımında ayrı
+bir etiketi yoktur — codex.flywire.ai'de ada göre aratıp bulduğunuz bir
+root_id'yi `target_root_ids` ile hedefleyin). Bundan iki bağımsız kanal
+çıkar: bağlantı başına iletim hızı şiddeti ve nöron başına ateşleme eşiği
+şiddeti (bkz. `src/mbsim/perturbations.py`).
 
-### 6. Testler ve her şeyi uçtan uca doğrulama
+`src/mbsim/damage.py` içinde bu şiddetleri gerçek sayılara dönüştüren iki
+yer tutucu eğri bulunur: `linear_slowdown` (hız azalması) ve
+`linear_threshold_increase` (eşik artışı), ikisi de [0, 1] aralığında
+doğrusaldır. Tıp ekibi literatüre dayalı fonksiyonlar sağladığında (şiddet ->
+azalma), bunları oraya yazın ve `mbsim.metrics.compare(...)` fonksiyonuna
+`slowdown_fn`/`threshold_fn` olarak geçirin (hem `app.py` hem de `cli.py`'de
+zaten bağlanmıştır) — işlem hattının başka hiçbir yerinde değişiklik gerekmez.
+
+`src/mbsim/calibration.py`, simülasyonun soyut zaman birimlerini
+milisaniyeye çeviren tek yer tutucu sabiti barındırır — gerçek zamanlama
+verisi (Faz 2 laboratuvar ölçümleri veya bir literatür değeri) elde
+edildiğinde bu fonksiyonun gövdesini değiştirin.
+
+### 6. Deneme-tabanlı Weber kesri tahmini
+
+Tek bir sağlıklı-hasarlı karşılaştırması bir nokta tahminidir, bir Weber
+kesrinin asıl ölçtüğü denemeler-arası değişkenlik değildir.
+`src/mbsim/trials.py`'nin `compare_trials` fonksiyonu her taraf için N
+bağımsız gürültülü deneme çalıştırır (iletim hızında yer tutucu log-normal
+gürültü — bkz. modül docstring'i) ve her durum için değişim katsayısını
+(std/ortalama varış zamanı) ampirik bir Weber-kesri-benzeri sayı olarak
+bildirir. Uygulamada, Algı sekmesindeki "Deneme-tabanlı Weber kesri tahmini"
+panelini açın ve "▶ Denemeleri çalıştır"a tıklayın (gerçek konektomda
+~10-15 saniye sürdüğünden bir düğmenin arkasına gizlenmiştir).
+
+### 7. Faz 2/3 verisi elde edildiğinde doğrulama
+
+`src/mbsim/validation.py`, simülasyonun % sapmasını Faz 2 sinek tırmanma
+deneyi % sapmasıyla ve/veya Faz 3 insan zaman algısı görevi sapmasıyla
+karşılaştırır ve her ampirik kaynağın simülasyonla *aynı yönde* hareket edip
+etmediğini bildirir — projenin asıl doğrulama hedefi budur (bkz. modülün
+docstring'i), tam bir yüzde eşleşmesi değil. Her iki veri kaynağı da henüz
+mevcut değil; `data/lab/README.md` ve `data/clinical/README.md`, bu veriyi
+ileride dışa aktaracak kişinin formatı bilmesi için beklenen CSV şeklini
+(boş `.template.csv` dosyalarıyla birlikte) belgeler, ve `validation.py`'nin
+kendi testleri karşılaştırma mantığını şimdiden aynı şekilde biçimlendirilmiş
+sentetik veriyle çalıştırır.
+
+### 8. Testler ve her şeyi uçtan uca doğrulama
 
 Otomatik:
 
@@ -510,8 +599,13 @@ src/mbsim/
   mushroom_body.py         # yapılandırılan girdi/aktarıcı/çıktı yolağına göre filtreler
   graph.py                 # NetworkX grafik oluşturma + sağlık kontrolleri
   simulation.py            # olay-tabanlı sinyal yayılımı
-  damage.py                 # şiddet -> iletim hızı yavaşlaması (değiştirilebilir)
+  targeting.py              # her bozulmayı etkilediği belirli bağlantılara/nöronlara çözümler
+  perturbations.py          # adlandırılmış bozulmalar (Tau/Amiloid/GABA/APL) -> bağlantı/nöron başına şiddet
+  damage.py                 # şiddet -> iletim hızı yavaşlaması / ateşleme eşiği artışı (değiştirilebilir)
+  calibration.py             # simüle edilmiş zaman birimleri -> milisaniye (değiştirilebilir)
   metrics.py                # sağlıklı/hasarlı karşılaştırma + % sapma
+  trials.py                  # Monte Carlo denemeler-arası değişkenlik -> ampirik Weber kesri
+  validation.py               # simülasyon çıktısını Faz 2/3 ampirik verisiyle karşılaştırır
   layout.py                  # ortak nöron yerleşimi / rol renkleri / büyük grafik ölçekleme
   visualize.py                # statik matplotlib grafikleri (CLI tarafından kullanılır)
   plotly_viz.py                 # etkileşimli Plotly grafikleri + yayılım animasyonu (uygulama tarafından kullanılır)
@@ -521,5 +615,7 @@ configs/default.yaml       # CLI yapılandırması (örnek veri, PN/KC/MBON roll
 configs/raw.yaml           # gerçek veri için CLI yapılandırması (ALPN/Kenyon_Cell/MBON rolleri)
 data/fixtures/             # sentetik demo verisi (git'te izlenir)
 data/raw/                  # gerçek Codex dışa aktarımı buraya konur (gitignore'da)
+data/lab/                  # Faz 2 sinek deneyi sonuçları, toplandığında buraya (gitignore'da)
+data/clinical/             # Faz 3 insan görev sonuçları, toplandığında buraya (gitignore'da)
 tests/                     # pytest test paketi
 ```
