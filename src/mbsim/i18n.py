@@ -363,6 +363,79 @@ STRINGS = {
             "tasarım gereği aşırı görünecektir."
         ),
     },
+    # Validation (Phase 2/3) tab
+    "tab_validation": {"en": "Phase 2/3 Validation", "tr": "Faz 2/3 Doğrulama"},
+    "caption_validation": {
+        "en": (
+            "Compare this simulation's % deviation against Phase 2 fly lab data and/or "
+            "Phase 3 human clinical data, once collected. The goal is a same-direction, "
+            "meaningful-magnitude match, not an exact percentage (see mbsim/validation.py)."
+        ),
+        "tr": (
+            "Bu simülasyonun % sapmasını, toplandığında Faz 2 sinek laboratuvar verisi "
+            "ve/veya Faz 3 insan klinik verisiyle karşılaştırın. Hedef, tam bir yüzde "
+            "eşleşmesi değil, aynı yönde ve anlamlı büyüklükte bir eşleşmedir "
+            "(bkz. mbsim/validation.py)."
+        ),
+    },
+    "label_climbing_upload": {
+        "en": "Phase 2 climbing assay CSV (optional)",
+        "tr": "Faz 2 tırmanma deneyi CSV'si (isteğe bağlı)",
+    },
+    "help_climbing_upload": {
+        "en": "Columns: group (control/alzheimers_model), fly_id, trial, climb_time_s — see data/lab/README.md.",
+        "tr": "Sütunlar: group (control/alzheimers_model), fly_id, trial, climb_time_s — bkz. data/lab/README.md.",
+    },
+    "label_clinical_upload": {
+        "en": "Phase 3 time-perception task CSV (optional)",
+        "tr": "Faz 3 zaman algısı görevi CSV'si (isteğe bağlı)",
+    },
+    "help_clinical_upload": {
+        "en": (
+            "Columns: patient_id, group (control/alzheimers), target_interval_s, "
+            "reported_time_s, simple_reaction_time_s — see data/clinical/README.md."
+        ),
+        "tr": (
+            "Sütunlar: patient_id, group (control/alzheimers), target_interval_s, "
+            "reported_time_s, simple_reaction_time_s — bkz. data/clinical/README.md."
+        ),
+    },
+    "btn_load_example_validation": {
+        "en": "▶ Load synthetic example data (not real lab/clinical results)",
+        "tr": "▶ Sentetik örnek veriyi yükle (gerçek laboratuvar/klinik sonucu değildir)",
+    },
+    "caption_example_validation": {
+        "en": "Showing the synthetic example dataset — upload real CSVs above to replace it.",
+        "tr": "Sentetik örnek veri seti gösteriliyor — gerçek CSV'leri yukarıdan yükleyerek değiştirin.",
+    },
+    "info_no_validation_data": {
+        "en": (
+            "No Phase 2/3 data yet — upload a CSV above, or click “▶ Load synthetic example "
+            "data” to see how this comparison will look once real data exists."
+        ),
+        "tr": (
+            "Henüz Faz 2/3 verisi yok — yukarıdan bir CSV yükleyin veya gerçek veri elde "
+            "edildiğinde bu karşılaştırmanın nasıl görüneceğini görmek için “▶ Sentetik örnek "
+            "veriyi yükle”ye tıklayın."
+        ),
+    },
+    "err_validation_load": {
+        "en": "Could not read the uploaded file: {error}",
+        "tr": "Yüklenen dosya okunamadı: {error}",
+    },
+    "warn_validation_no_sim_deviation": {
+        "en": "The simulation reached no output neurons, so there is no simulated % deviation to compare against.",
+        "tr": "Simülasyon hiçbir çıktı nöronuna ulaşmadı, bu yüzden karşılaştırılacak bir simüle % sapma yok.",
+    },
+    "metric_sim_deviation": {"en": "Simulation % deviation", "tr": "Simülasyon % sapması"},
+    "metric_fly_deviation": {"en": "Phase 2 fly % deviation", "tr": "Faz 2 sinek % sapması"},
+    "metric_human_deviation": {
+        "en": "Phase 3 human excess % deviation",
+        "tr": "Faz 3 insan fazladan % sapması",
+    },
+    "label_same_direction": {"en": "Same direction as simulation?", "tr": "Simülasyonla aynı yönde mi?"},
+    "same_direction_yes": {"en": "✅ Yes", "tr": "✅ Evet"},
+    "same_direction_no": {"en": "❌ No", "tr": "❌ Hayır"},
 }
 
 

@@ -4,6 +4,8 @@ import pytest
 from mbsim.validation import (
     climbing_assay_pct_deviation,
     compare_to_simulation,
+    example_climbing_assay,
+    example_time_perception_task,
     load_climbing_assay,
     load_time_perception_task,
     time_perception_excess_deviation,
@@ -120,3 +122,14 @@ def test_compare_to_simulation_omits_sources_not_provided():
     result = compare_to_simulation(28.0)
     assert "fly_pct_deviation" not in result
     assert "human_excess_pct_deviation" not in result
+
+
+def test_example_climbing_assay_is_loadable_and_matches_documented_deviation():
+    df = example_climbing_assay()
+    assert {"group", "fly_id", "trial", "climb_time_s"} <= set(df.columns)
+    assert abs(climbing_assay_pct_deviation(df) - 30.0) < 1e-9
+
+
+def test_example_time_perception_task_matches_documented_deviation():
+    df = example_time_perception_task()
+    assert abs(time_perception_excess_deviation(df) - 30.0) < 1e-9

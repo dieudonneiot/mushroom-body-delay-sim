@@ -205,7 +205,7 @@ change, without touching code:
 - `roles`: which cell types count as input/relay/output — `PN`/`KC`/`MBON` for
   the fixture, `ALPN`/`Kenyon_Cell`/`MBON` for real Codex data
 - `simulation.conduction_velocity`, `simulation.threshold`
-- `damage.severity`
+- `damage.perturbations`: the same Tau/Amyloid/GABA/APL stack as the app's "+ Add Perturbation" panel (see `configs/default.yaml` for the shape)
 - `output.dir`: where results are written
 
 ### 5. Extending with a real damage model
@@ -256,6 +256,15 @@ document the expected CSV shape (with empty `.template.csv` files) so
 whoever exports that data later knows the format, and `validation.py`'s own
 tests exercise the comparison logic now against synthetic data shaped the
 same way.
+
+This comparison is also exposed in the app itself — the **"Phase 2/3
+Validation"** tab lets you upload a climbing-assay CSV and/or a
+time-perception-task CSV (once either exists) and see the simulation's %
+deviation compared side by side, with a same-direction check for each. Since
+neither data source exists yet, a **"▶ Load synthetic example data"** button
+loads a clearly-labeled placeholder dataset instead, so the comparison
+mechanism itself can be demonstrated (e.g. for a presentation) before real
+data lands.
 
 ### 8. Tests & verifying everything end-to-end
 
@@ -500,7 +509,7 @@ Koda dokunmadan değiştirmek için `configs/default.yaml` dosyasını (veya
 - `roles`: hangi hücre tiplerinin girdi/aktarıcı/çıktı sayılacağı — örnek veri
   için `PN`/`KC`/`MBON`, gerçek Codex verisi için `ALPN`/`Kenyon_Cell`/`MBON`
 - `simulation.conduction_velocity`, `simulation.threshold`
-- `damage.severity`
+- `damage.perturbations`: uygulamanın "＋ Bozulma Ekle" panelindeki ile aynı Tau/Amiloid/GABA/APL yığını (biçim için `configs/default.yaml` dosyasına bakın)
 - `output.dir`: sonuçların yazılacağı yer
 
 ### 5. Gerçek bir hasar modeliyle genişletme
@@ -553,6 +562,16 @@ ileride dışa aktaracak kişinin formatı bilmesi için beklenen CSV şeklini
 (boş `.template.csv` dosyalarıyla birlikte) belgeler, ve `validation.py`'nin
 kendi testleri karşılaştırma mantığını şimdiden aynı şekilde biçimlendirilmiş
 sentetik veriyle çalıştırır.
+
+Bu karşılaştırma uygulamanın kendisinde de sunulur — **"Faz 2/3 Doğrulama"**
+sekmesi, bir tırmanma-deneyi CSV'si ve/veya bir zaman-algısı-görevi CSV'si
+(herhangi biri mevcut olduğunda) yüklemenize ve simülasyonun % sapmasının bu
+verilerle yan yana karşılaştırmasını, her biri için bir "aynı yön" kontrolüyle
+birlikte görmenize olanak tanır. Her iki veri kaynağı da henüz mevcut
+olmadığından, bir **"▶ Sentetik örnek veriyi yükle"** düğmesi bunun yerine
+açıkça etiketlenmiş bir yer tutucu veri seti yükler; böylece karşılaştırma
+mekanizmasının kendisi, gerçek veri elde edilmeden önce (örn. bir sunum için)
+gösterilebilir.
 
 ### 8. Testler ve her şeyi uçtan uca doğrulama
 

@@ -24,6 +24,13 @@ from mbsim.plotly_viz import (
     build_weber_fechner_figure,
 )
 from mbsim.trials import compare_trials
+from mbsim.validation import (
+    compare_to_simulation,
+    example_climbing_assay,
+    example_time_perception_task,
+    load_climbing_assay,
+    load_time_perception_task,
+)
 
 st.set_page_config(page_title="Mushroom Body Delay Simulator", page_icon="🧠", layout="wide")
 
@@ -301,13 +308,14 @@ st.caption(
 if (max(edge_severity.values(), default=0.0)) >= 0.95 or (max(node_severity.values(), default=0.0)) >= 0.95:
     st.warning(t("warn_high_severity", lang))
 
-tab_perception, tab_network, tab_comparison, tab_data, tab_propagation = st.tabs(
+tab_perception, tab_network, tab_comparison, tab_data, tab_propagation, tab_validation = st.tabs(
     [
         t("tab_perception", lang),
         t("tab_network", lang),
         t("tab_comparison", lang),
         t("tab_data", lang),
         t("tab_propagation", lang),
+        t("tab_validation", lang),
     ]
 )
 
@@ -494,3 +502,73 @@ with tab_propagation:
         ),
         use_container_width=True,
     )
+
+with tab_validation:
+    st.caption(t("caption_validation", lang))
+
+    climbing_upload, clinical_upload = st.columns(2)
+    with climbing_upload:
+        climbing_file = st.file_uploader(
+            t("label_climbing_upload", lang), type="csv", help=t("help_climbing_upload", lang)
+        )
+    with clinical_upload:
+        clinical_file = st.file_uploader(
+            t("label_clinical_upload", lang), type="csv", help=t("help_clinical_upload", lang)
+        )
+
+    if "use_example_validation" not in st.session_state:
+        st.session_state.use_example_validation = False
+    if st.button(t("btn_load_example_validation", lang)):
+        st.session_state.use_example_validation = True
+
+    climbing_df = clinical_df = None
+    validation_error = None
+    try:
+        if climbing_file is not None:
+            climbing_df = load_climbing_assay(pyio.BytesIO(climbing_file.getvalue()))
+        elif st.session_state.use_example_validation:
+            climbing_df = example_climbing_assay()
+
+        if clinical_file is not None:
+            clinical_df = load_time_perception_task(pyio.BytesIO(clinical_file.getvalue()))
+        elif st.session_state.use_example_validation:
+            clinical_df = example_time_perception_task()
+    except Exception as exc:
+        validation_error = exc
+
+    if validation_error is not None:
+        st.error(t("err_validation_load", lang, error=validation_error))
+    elif climbing_df is None and clinical_df is None:
+        st.info(t("info_no_validation_data", lang))
+    else:
+        if climbing_file is None and clinical_file is None and st.session_state.use_example_validation:
+            st.caption(t("caption_example_validation", lang))
+
+        sim_pct_deviation = result.summary["mean_pct_deviation"]
+        if sim_pct_deviation is None:
+            st.warning(t("warn_validation_no_sim_deviation", lang))
+        else:
+            validation_result = compare_to_simulation(
+                sim_pct_deviation, climbing_df=climbing_df, clinical_df=clinical_df
+            )
+
+            vcol1, vcol2, vcol3 = st.columns(3)
+            vcol1.metric(t("metric_sim_deviation", lang), f"{validation_result['simulation_pct_deviation']:.1f}%")
+
+            if "fly_pct_deviation" in validation_result:
+                vcol2.metric(t("metric_fly_deviation", lang), f"{validation_result['fly_pct_deviation']:.1f}%")
+                same = validation_result["fly_same_direction_as_simulation"]
+                vcol2.caption(
+                    f"{t('label_same_direction', lang)} "
+                    f"{t('same_direction_yes', lang) if same else t('same_direction_no', lang)}"
+                )
+
+            if "human_excess_pct_deviation" in validation_result:
+                vcol3.metric(
+                    t("metric_human_deviation", lang), f"{validation_result['human_excess_pct_deviation']:.1f}%"
+                )
+                same = validation_result["human_same_direction_as_simulation"]
+                vcol3.caption(
+                    f"{t('label_same_direction', lang)} "
+                    f"{t('same_direction_yes', lang) if same else t('same_direction_no', lang)}"
+                )

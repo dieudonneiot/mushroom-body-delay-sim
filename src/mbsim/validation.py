@@ -55,6 +55,15 @@ def climbing_assay_pct_deviation(
     return (damaged_mean - healthy_mean) / healthy_mean * 100
 
 
+def _add_time_perception_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df["corrected_perceived_time_s"] = df["reported_time_s"] - df["simple_reaction_time_s"]
+    df["pct_deviation"] = (
+        (df["corrected_perceived_time_s"] - df["target_interval_s"]) / df["target_interval_s"] * 100
+    )
+    return df
+
+
 def load_time_perception_task(path) -> pd.DataFrame:
     """Load a Phase 3 clinical time-perception task export — see
     `data/clinical/README.md` for the expected columns. Adds
@@ -64,12 +73,43 @@ def load_time_perception_task(path) -> pd.DataFrame:
     missing = TIME_PERCEPTION_REQUIRED_COLUMNS - set(df.columns)
     if missing:
         raise ValueError(f"{path} is missing required column(s) {sorted(missing)}")
-    df = df.copy()
-    df["corrected_perceived_time_s"] = df["reported_time_s"] - df["simple_reaction_time_s"]
-    df["pct_deviation"] = (
-        (df["corrected_perceived_time_s"] - df["target_interval_s"]) / df["target_interval_s"] * 100
+    return _add_time_perception_derived_columns(df)
+
+
+def example_climbing_assay() -> pd.DataFrame:
+    """Synthetic Phase 2 climbing-assay data, shaped like
+    `data/lab/climbing_assay.template.csv`, for demoing the validation
+    comparison before real lab data exists. Not real data —
+    `alzheimers_model` flies climb 30% slower than `control` by construction."""
+    return pd.DataFrame(
+        {
+            "group": ["control"] * 3 + ["alzheimers_model"] * 3,
+            "fly_id": ["c1", "c2", "c3", "a1", "a2", "a3"],
+            "trial": [1, 1, 1, 1, 1, 1],
+            "climb_time_s": [10.0, 10.0, 10.0, 13.0, 13.0, 13.0],
+        }
     )
-    return df
+
+
+def example_time_perception_task() -> pd.DataFrame:
+    """Synthetic Phase 3 clinical time-perception data, shaped like
+    `data/clinical/time_perception_task.template.csv` (already run through
+    `load_time_perception_task`'s derived-column logic), for demoing the
+    validation comparison before real patient data exists. Not real data —
+    `control` patients perceive the target interval accurately (0% deviation
+    after reaction-time correction); `alzheimers` patients perceive time as
+    passing more slowly (+30% deviation), matching the project pitch's worked
+    example (10s target, pressed at 13s)."""
+    raw = pd.DataFrame(
+        {
+            "patient_id": ["p1", "p2", "p3", "p4"],
+            "group": ["control", "control", "alzheimers", "alzheimers"],
+            "target_interval_s": [10.0, 10.0, 10.0, 10.0],
+            "reported_time_s": [10.2, 10.2, 13.2, 13.2],
+            "simple_reaction_time_s": [0.2, 0.2, 0.2, 0.2],
+        }
+    )
+    return _add_time_perception_derived_columns(raw)
 
 
 def time_perception_group_deviation(df: pd.DataFrame, group: str) -> float:
