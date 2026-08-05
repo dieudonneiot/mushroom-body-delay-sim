@@ -102,6 +102,13 @@ try every feature immediately with no setup.
 streamlit run app.py
 ```
 
+**One-command launch:** `.\sirin.ps1` (PowerShell) or `./sirin.sh` (Git Bash/WSL/macOS/Linux) —
+or just double-click `sirin.bat` on Windows. This first pulls the latest `main`
+and installs/updates dependencies, then starts the app — all best-effort: if
+there's no network or git credentials aren't cached, it prints a one-line
+warning and launches anyway with whatever code is already on disk, so it
+never hangs or blocks (safe to run right before a live demo).
+
 This opens a browser tab. Every detail of what's on screen:
 
 **Language toggle** — at the very top of the sidebar, a switch between
@@ -402,6 +409,15 @@ böylece hiçbir kurulum yapmadan tüm özellikleri hemen deneyebilirsiniz.
 ```
 streamlit run app.py
 ```
+
+**Tek komutla başlatma:** `.\sirin.ps1` (PowerShell) veya `./sirin.sh` (Git
+Bash/WSL/macOS/Linux) — Windows'ta `sirin.bat` dosyasına çift tıklamak da
+yeterli. Bu, önce en güncel `main` dalını çeker ve bağımlılıkları
+kurar/günceller, ardından uygulamayı başlatır — hepsi "elden geldiğince":
+ağ yoksa veya git kimlik bilgileri önbelleğe alınmamışsa, tek satırlık bir
+uyarı yazdırıp yine de eldeki koduyla başlatmaya devam eder; bu yüzden asla
+takılıp kalmaz veya engellenmez (canlı bir sunumdan hemen önce çalıştırmak
+güvenlidir).
 
 Bu komut tarayıcıda bir sekme açar. Ekrandaki her şeyin ayrıntısı:
 
