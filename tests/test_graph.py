@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas as pd
+
 from mbsim.graph import build_graph, sanity_report
 from mbsim.io import load_raw_data
 from mbsim.mushroom_body import extract_mb_subgraph
@@ -34,6 +36,27 @@ def test_edges_carry_nt_type_for_targeting():
     GABA-specific perturbations to real edges instead of the whole graph."""
     graph = _build_fixture_graph()
     assert graph.edges["PN1", "KC1"]["nt_type"] == "ACH"
+
+
+def test_duplicate_pre_post_rows_across_neuropils_sum_weight_not_overwrite():
+    """A real Codex export has one row per (pre, post, neuropil) triple, so a
+    pair connecting across two MB compartments produces two rows — build_graph
+    must sum their syn_count, not let the second row silently clobber the
+    first (the previous behavior)."""
+    edge_df = pd.DataFrame(
+        {
+            "pre_id": ["PN1", "PN1"],
+            "post_id": ["KC1", "KC1"],
+            "syn_count": [12, 5],
+            "neuropil": ["MB_CA_L", "MB_ML_L"],
+            "nt_type": ["ACH", "ACH"],
+        }
+    )
+    graph = build_graph(edge_df, {"PN1": "input", "KC1": "relay"})
+    assert graph.number_of_edges() == 1
+    assert graph.edges["PN1", "KC1"]["weight"] == 17
+    assert graph.edges["PN1", "KC1"]["neuropil"] == frozenset({"MB_CA_L", "MB_ML_L"})
+    assert graph.edges["PN1", "KC1"]["nt_type"] == "ACH"  # single value stays a scalar
 
 
 def test_extra_node_ids_force_includes_an_otherwise_unclassified_neuron():

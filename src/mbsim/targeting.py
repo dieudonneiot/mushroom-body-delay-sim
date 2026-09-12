@@ -48,14 +48,23 @@ def all_edges(graph: nx.DiGraph) -> set[tuple[str, str]]:
     return set(graph.edges())
 
 
+def _matches_any(value, wanted: set) -> bool:
+    """True if `value` (a plain scalar, or a frozenset for an edge whose
+    attribute genuinely varies across the multiple connectome rows
+    mbsim.graph.build_graph aggregated into it) overlaps `wanted`."""
+    if isinstance(value, (frozenset, set)):
+        return bool(value & wanted)
+    return value in wanted
+
+
 def edges_by_nt_type(graph: nx.DiGraph, nt_types: tuple[str, ...]) -> set[tuple[str, str]]:
     wanted = set(nt_types)
-    return {(u, v) for u, v, data in graph.edges(data=True) if data.get("nt_type") in wanted}
+    return {(u, v) for u, v, data in graph.edges(data=True) if _matches_any(data.get("nt_type"), wanted)}
 
 
 def edges_by_neuropil(graph: nx.DiGraph, neuropils: list[str]) -> set[tuple[str, str]]:
     wanted = set(neuropils)
-    return {(u, v) for u, v, data in graph.edges(data=True) if data.get("neuropil") in wanted}
+    return {(u, v) for u, v, data in graph.edges(data=True) if _matches_any(data.get("neuropil"), wanted)}
 
 
 def edges_from_nodes(graph: nx.DiGraph, node_ids: list[str]) -> set[tuple[str, str]]:

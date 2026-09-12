@@ -39,9 +39,17 @@ DEFAULT_NOISE_STD = 0.1
 
 
 def _jittered_velocity(base_velocity: float, noise_std: float, rng: random.Random) -> float:
+    """Log-normal multiplicative jitter with E[factor] == 1 for any `noise_std`
+    (mean-preserving, not just median-preserving). A bare
+    `lognormvariate(0, sigma)` has E[x] = exp(sigma**2/2) != 1, which would
+    systematically inflate the average sampled velocity as a function of
+    `noise_std` alone — confounding "how much trial-to-trial variability was
+    injected" with "how fast the network runs on average". Using
+    `mu = -sigma**2/2` cancels that bias exactly."""
     if noise_std <= 0:
         return base_velocity
-    return base_velocity * rng.lognormvariate(0.0, noise_std)
+    mu = -0.5 * noise_std**2
+    return base_velocity * rng.lognormvariate(mu, noise_std)
 
 
 def run_trials(
@@ -75,12 +83,20 @@ def run_trials(
     samples: dict[str, list[float]] = {node: [] for node in output_nodes}
 
     for _ in range(n_trials):
-        trial_velocity = _jittered_velocity(base_conduction_velocity, noise_std, rng)
-        trial_edge_velocity = {edge: _jittered_velocity(v, noise_std, rng) for edge, v in edge_velocity.items()}
+        # Independent jitter per edge per trial, for every edge in the graph —
+        # not just the ones with an explicit damage override. Previously,
+        # every edge lacking an override shared one draw per trial (passed as
+        # the global `conduction_velocity` fallback), so their arrival times
+        # moved in lockstep instead of varying independently as this
+        # function's own docstring claims.
+        trial_edge_velocity = {
+            edge: _jittered_velocity(edge_velocity.get(edge, base_conduction_velocity), noise_std, rng)
+            for edge in graph.edges()
+        }
         fire_times = simulate(
             graph,
             input_nodes,
-            conduction_velocity=trial_velocity,
+            conduction_velocity=base_conduction_velocity,
             threshold=threshold,
             edge_velocity=trial_edge_velocity,
             node_threshold=node_threshold,

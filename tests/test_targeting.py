@@ -74,3 +74,14 @@ def test_target_neuropils_narrows_gaba_further():
     g = _graph()
     result = resolve_targets(g, {"type": "gaba", "target_neuropils": ["MB_ML_L"]})
     assert result == {("C", "D")}
+
+
+def test_edges_by_neuropil_matches_a_multi_neuropil_edge():
+    """An edge whose neuropil attribute is a frozenset (build_graph's
+    aggregated form for a pair connecting across >1 compartment) must match
+    on overlap, not a broken exact-equality check against the set object."""
+    g = nx.DiGraph()
+    g.add_edge("A", "B", nt_type="ACH", neuropil=frozenset({"MB_CA_L", "MB_ML_L"}))
+    g.add_edge("B", "C", nt_type="ACH", neuropil="MB_CA_L")
+    assert edges_by_neuropil(g, ["MB_ML_L"]) == {("A", "B")}
+    assert edges_by_neuropil(g, ["MB_CA_L"]) == {("A", "B"), ("B", "C")}

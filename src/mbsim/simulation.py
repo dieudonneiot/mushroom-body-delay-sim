@@ -20,8 +20,13 @@ import networkx as nx
 
 
 def edge_delay(syn_count: int, conduction_velocity: float) -> float:
-    """More synapses (stronger connection) and higher conduction velocity -> shorter delay."""
-    return 1.0 / (max(conduction_velocity, 1e-9) * max(syn_count, 1))
+    """More synapses (stronger connection) and higher conduction velocity -> shorter delay.
+
+    Only meaningful for `conduction_velocity > 0` — callers must treat a
+    non-positive velocity (a fully blocked connection, e.g. a Tau/Amyloid
+    perturbation at 100% intensity) as impassable rather than calling this
+    with it (see `simulate`'s zero-velocity check below)."""
+    return 1.0 / (conduction_velocity * max(syn_count, 1))
 
 
 def simulate(
@@ -59,6 +64,15 @@ def simulate(
         for successor in graph.successors(node):
             syn_count = graph.edges[node, successor]["weight"]
             velocity = edge_velocity.get((node, successor), conduction_velocity)
+            if velocity <= 0:
+                # Fully blocked (e.g. a 100%-intensity Tau/Amyloid edge) —
+                # this connection transmits no signal at all, not just a very
+                # slow one. Previously this fell through to edge_delay's
+                # div-by-zero guard, producing an astronomical but *finite*
+                # delay, so the successor still ended up in fire_time as if
+                # reached (corrupting %-deviation stats and the "output
+                # neurons reached" KPI) instead of being correctly excluded.
+                continue
             delay = edge_delay(syn_count, velocity)
             heapq.heappush(heap, (t + delay, successor, 1.0))
 

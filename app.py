@@ -174,6 +174,12 @@ with st.sidebar:
                     key=f"pert_type_{pid}",
                     help=t(PERTURBATION_TYPES[entry["type"]]["description_key"], lang),
                 )
+                if entry["type"] != "apl":
+                    # Otherwise a root_id entered while this row was set to APL
+                    # would silently survive the switch and narrow the new
+                    # type's (e.g. Tau's normally-all-edges) target set down to
+                    # that one neuron's outgoing edges.
+                    entry.pop("target_root_ids", None)
             with remove_col:
                 st.write("")
                 if st.button(t("btn_remove_perturbation", lang), key=f"pert_remove_{pid}"):

@@ -6,6 +6,7 @@ data/lab/*
 data/clinical/*
 !data/clinical/README.md
 !data/clinical/*.template.csv
+data/pdf/
 *.egg-info/
 __pycache__/
 *.pyc

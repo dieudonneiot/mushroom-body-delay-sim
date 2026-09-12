@@ -118,6 +118,24 @@ def test_compare_to_simulation_flags_opposite_direction():
     assert result["fly_same_direction_as_simulation"] is False
 
 
+def test_compare_to_simulation_zero_deviation_does_not_count_as_same_direction():
+    """An exactly-zero empirical deviation (no measured effect) must not be
+    reported as agreeing with a nonzero simulated deviation of either sign —
+    a naive `(a > 0) == (b > 0)` check wrongly says True here since neither
+    0.0 nor a negative number is `> 0`."""
+    zero_effect_climbing_df = pd.DataFrame(
+        {
+            "group": ["control", "alzheimers_model"],
+            "fly_id": ["c1", "a1"],
+            "trial": [1, 1],
+            "climb_time_s": [10.0, 10.0],
+        }
+    )
+    result = compare_to_simulation(-10.0, climbing_df=zero_effect_climbing_df)
+    assert result["fly_pct_deviation"] == 0.0
+    assert result["fly_same_direction_as_simulation"] is False
+
+
 def test_compare_to_simulation_omits_sources_not_provided():
     result = compare_to_simulation(28.0)
     assert "fly_pct_deviation" not in result

@@ -37,7 +37,7 @@ from typing import Callable
 
 import networkx as nx
 
-from mbsim.targeting import resolve_targets
+from mbsim.targeting import DEFAULT_TARGET_FNS, resolve_targets
 
 ReductionFn = Callable[[float], float]
 
@@ -77,6 +77,21 @@ PERTURBATION_TYPES: dict[str, dict] = {
         "reduction_fn": _clamped_identity,
     },
 }
+
+# `targeting.DEFAULT_TARGET_FNS` must have an entry (possibly `None`, meaning
+# "no default scope") for every type registered here — otherwise a type added
+# to only one of the two dicts would still show up as a fully working,
+# selectable UI perturbation, but silently resolve to zero targeted
+# edges/nodes everywhere, indistinguishable from GABA/APL's legitimate no-op
+# cases. Fail loudly at import time instead.
+_unregistered_in_targeting = set(PERTURBATION_TYPES) - set(DEFAULT_TARGET_FNS)
+if _unregistered_in_targeting:
+    raise ImportError(
+        f"Perturbation type(s) {sorted(_unregistered_in_targeting)} are in "
+        "perturbations.PERTURBATION_TYPES but have no entry in "
+        "targeting.DEFAULT_TARGET_FNS — add one (or explicitly None for "
+        "'no default target') before using this type."
+    )
 
 
 def _active_contributions(perturbations: list[dict], channel: str):

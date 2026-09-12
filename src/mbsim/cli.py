@@ -16,7 +16,16 @@ def run(config_path: str) -> None:
     config = yaml.safe_load(Path(config_path).read_text())
 
     data_cfg = config["data"]
-    data_dir = data_cfg["raw_dir"] if data_cfg["mode"] == "raw" else data_cfg["fixture_dir"]
+    mode = data_cfg["mode"]
+    if mode == "raw":
+        data_dir = data_cfg["raw_dir"]
+    elif mode == "fixture":
+        data_dir = data_cfg["fixture_dir"]
+    else:
+        raise ValueError(
+            f"Unknown data.mode {mode!r} in {config_path!r} — expected 'raw' or 'fixture' "
+            "('upload' is only available in the interactive Streamlit app, not the CLI)."
+        )
     connections, classification = load_raw_data(data_dir)
 
     damage_cfg = config["damage"]

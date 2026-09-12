@@ -1,7 +1,17 @@
 import networkx as nx
 import pytest
 
-from mbsim.perturbations import per_edge_velocity_severity, per_node_threshold_severity
+from mbsim.perturbations import PERTURBATION_TYPES, per_edge_velocity_severity, per_node_threshold_severity
+from mbsim.targeting import DEFAULT_TARGET_FNS
+
+
+def test_every_perturbation_type_has_a_targeting_entry():
+    """Every key in PERTURBATION_TYPES (what the UI lets a user select) must
+    have a corresponding entry in targeting.DEFAULT_TARGET_FNS (what that
+    type actually affects) — otherwise a type registered in only one dict
+    would look like a fully working, selectable perturbation while silently
+    having zero effect everywhere, with nothing to catch the mismatch."""
+    assert set(PERTURBATION_TYPES) <= set(DEFAULT_TARGET_FNS)
 
 
 def _graph():

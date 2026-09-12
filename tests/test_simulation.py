@@ -59,6 +59,18 @@ def test_edge_velocity_override_only_affects_that_edge():
     assert overridden["KC2"] == baseline["KC2"]
 
 
+def test_zero_velocity_edge_makes_the_only_downstream_node_unreached():
+    """A fully-blocked edge (conduction_velocity == 0, reachable via a 100%
+    intensity Tau/Amyloid perturbation) must exclude the node it was the only
+    path to, not report it reached at some astronomically large fire time."""
+    graph = _fixture_graph()
+    fire_times = simulate(
+        graph, ["PN1", "PN2", "PN3"], conduction_velocity=1.0, threshold=1.0, edge_velocity={("PN1", "KC1"): 0.0}
+    )
+    assert "KC1" not in fire_times  # KC1's only incoming edge is PN1->KC1
+    assert "KC2" in fire_times  # reached via a different, unaffected edge
+
+
 def test_node_threshold_override_only_delays_that_node():
     graph = _fixture_graph()
     baseline = simulate(graph, ["PN1", "PN2", "PN3"], conduction_velocity=1.0, threshold=1.0)

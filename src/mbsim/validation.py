@@ -133,6 +133,14 @@ def time_perception_excess_deviation(
     return time_perception_group_deviation(df, damaged_group) - time_perception_group_deviation(df, healthy_group)
 
 
+def _same_direction(a: float, b: float) -> bool:
+    """True only when `a` and `b` are strictly on the same side of zero (both
+    positive or both negative), or both exactly zero. A naive `(a > 0) ==
+    (b > 0)` comparison wrongly treats an exact zero as agreeing with any
+    negative value (and vice versa) since neither is `> 0`."""
+    return bool((a > 0 and b > 0) or (a < 0 and b < 0) or (a == 0 and b == 0))
+
+
 def compare_to_simulation(
     sim_pct_deviation: float,
     climbing_df: pd.DataFrame | None = None,
@@ -153,15 +161,15 @@ def compare_to_simulation(
             climbing_df, climbing_damaged_group, climbing_healthy_group
         )
         result["fly_pct_deviation"] = fly_pct_deviation
-        result["fly_same_direction_as_simulation"] = bool((fly_pct_deviation > 0) == (sim_pct_deviation > 0))
+        result["fly_same_direction_as_simulation"] = _same_direction(fly_pct_deviation, sim_pct_deviation)
 
     if clinical_df is not None:
         human_excess_pct_deviation = time_perception_excess_deviation(
             clinical_df, clinical_damaged_group, clinical_healthy_group
         )
         result["human_excess_pct_deviation"] = human_excess_pct_deviation
-        result["human_same_direction_as_simulation"] = bool(
-            (human_excess_pct_deviation > 0) == (sim_pct_deviation > 0)
+        result["human_same_direction_as_simulation"] = _same_direction(
+            human_excess_pct_deviation, sim_pct_deviation
         )
 
     return result
