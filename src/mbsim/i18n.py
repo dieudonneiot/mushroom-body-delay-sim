@@ -19,6 +19,10 @@ STRINGS = {
     "language_label": {"en": "🌐 Language / Dil", "tr": "🌐 Language / Dil"},
     "header_data_source": {"en": "Data source", "tr": "Veri kaynağı"},
     "label_data_source_radio": {"en": "Connectome data", "tr": "Konektom verisi"},
+    "opt_connectome": {
+        "en": "Bundled connectome (Princeton export)",
+        "tr": "Dahil edilen konektom (Princeton dışa aktarımı)",
+    },
     "opt_fixture": {"en": "Fixture (demo data)", "tr": "Örnek veri (demo)"},
     "opt_raw": {"en": "data/raw/ (local files)", "tr": "data/raw/ (yerel dosyalar)"},
     "opt_upload": {"en": "Upload CSVs", "tr": "CSV yükle"},

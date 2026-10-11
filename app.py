@@ -35,6 +35,7 @@ from mbsim.validation import (
 st.set_page_config(page_title="Mushroom Body Delay Simulator", page_icon="🧠", layout="wide")
 
 FIXTURE_DIR = Path("data/fixtures")
+CONNECTOME_DIR = Path("data/connectome")
 RAW_DIR = Path("data/raw")
 DEFAULT_ROLE_GUESSES = {
     "input": ["PN", "ALPN"],
@@ -49,7 +50,11 @@ def load_connectome(data_mode, connections_bytes, classification_bytes):
         connections = mbio.load_connections(pyio.BytesIO(connections_bytes))
         classification = mbio.load_classification(pyio.BytesIO(classification_bytes))
     else:
-        data_dir = FIXTURE_DIR if data_mode == "fixture" else RAW_DIR
+        data_dir = {
+            "connectome": CONNECTOME_DIR,
+            "fixture": FIXTURE_DIR,
+            "raw": RAW_DIR,
+        }[data_mode]
         connections, classification = mbio.load_raw_data(data_dir)
     return connections, classification
 
@@ -92,9 +97,13 @@ st.caption(t("app_caption", lang))
 
 with st.sidebar:
     st.header(t("header_data_source", lang))
-    data_mode_options = [t("opt_fixture", lang), t("opt_raw", lang), t("opt_upload", lang)]
+    data_modes = [("opt_connectome", "connectome"), ("opt_fixture", "fixture")]
+    if (RAW_DIR / "connections.csv").exists() and (RAW_DIR / "classification.csv").exists():
+        data_modes.append(("opt_raw", "raw"))
+    data_modes.append(("opt_upload", "upload"))
+    data_mode_options = [t(label_key, lang) for label_key, _ in data_modes]
     data_mode_label = st.radio(t("label_data_source_radio", lang), data_mode_options, index=0)
-    data_mode = dict(zip(data_mode_options, ["fixture", "raw", "upload"]))[data_mode_label]
+    data_mode = dict(zip(data_mode_options, [mode for _, mode in data_modes]))[data_mode_label]
 
     connections_bytes = classification_bytes = None
     if data_mode == "upload":
@@ -113,7 +122,9 @@ with st.sidebar:
         st.info(t("msg_upload_both", lang))
         st.stop()
 
-    if data_mode == "raw" and not (RAW_DIR / "connections.csv").exists():
+    if data_mode == "raw" and not (
+        (RAW_DIR / "connections.csv").exists() and (RAW_DIR / "classification.csv").exists()
+    ):
         st.error(t("err_raw_missing", lang))
         st.stop()
 

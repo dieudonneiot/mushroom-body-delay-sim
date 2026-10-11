@@ -117,8 +117,9 @@ chart title, and even the graph hover tooltips — nothing is left in the other
 language. Switch it anytime; your other settings (sliders, data source) are kept.
 
 **Sidebar — Data source**
-- *Fixture (demo data)* — the small synthetic graph in `data/fixtures/`, always available, no setup needed.
-- *data/raw/ (local files)* — reads `connections.csv` + `classification.csv` you've placed in `data/raw/` per the instructions in `data/raw/README.md`. If the files aren't there, you'll get a clear on-screen error telling you what's missing and where to look.
+- *Bundled connectome (Princeton export)* — the compact, real-data ALPN/Kenyon_Cell/MBON subset in `data/connectome/`; this is the default and ships with the Community Cloud app.
+- *Fixture (demo data)* — the small synthetic graph in `data/fixtures/`, always available for a quick demo.
+- *data/raw/ (local files)* — shown only when both CSVs exist in `data/raw/`; useful for local development with a full export.
 - *Upload CSVs* — two file-upload widgets appear; drop in your own `connections.csv` and `classification.csv` directly from your computer (no need to place them in the repo folder at all). Useful for trying a different Codex dataset release or a subset someone emailed you.
 
 **Sidebar — Mushroom Body pathway**
@@ -330,7 +331,8 @@ src/mbsim/
 configs/default.yaml      # CLI configuration (fixture data, PN/KC/MBON roles)
 configs/raw.yaml          # CLI configuration for real data (ALPN/Kenyon_Cell/MBON roles)
 data/fixtures/            # synthetic demo data (tracked in git)
-data/raw/                 # real Codex export goes here (gitignored)
+data/connectome/          # bundled Princeton connectome subset (tracked in git)
+data/raw/                 # source Codex exports / local full data (gitignored)
 data/lab/                 # Phase 2 fly assay results go here, once collected (gitignored)
 data/clinical/            # Phase 3 human task results go here, once collected (gitignored)
 tests/                    # pytest suite
@@ -428,8 +430,9 @@ yeniden çevirir — hiçbir şey diğer dilde kalmaz. İstediğiniz zaman
 değiştirebilirsiniz; diğer ayarlarınız (kaydırıcılar, veri kaynağı) korunur.
 
 **Kenar çubuğu — Veri kaynağı**
-- *Örnek veri (demo)* — `data/fixtures/` içindeki küçük sentetik grafik; her zaman kullanılabilir, kurulum gerekmez.
-- *data/raw/ (yerel dosyalar)* — `data/raw/README.md` dosyasındaki talimatlara göre `data/raw/` klasörüne koyduğunuz `connections.csv` + `classification.csv` dosyalarını okur. Dosyalar orada değilse, neyin eksik olduğunu ve nereye bakmanız gerektiğini açıkça belirten bir hata mesajı görürsünüz.
+- *Dahil edilen konektom (Princeton dışa aktarımı)* — `data/connectome/` içindeki gerçek veriden hazırlanmış ALPN/Kenyon_Cell/MBON alt kümesi; varsayılan olarak açılır ve Community Cloud uygulamasına dahildir.
+- *Örnek veri (demo)* — `data/fixtures/` içindeki küçük sentetik grafik; hızlı bir demo için her zaman kullanılabilir.
+- *data/raw/ (yerel dosyalar)* — yalnızca `data/raw/` içinde her iki CSV de varsa gösterilir; tam dışa aktarımı yerel geliştirmede kullanmak içindir.
 - *CSV yükle* — iki dosya yükleme alanı belirir; kendi `connections.csv` ve `classification.csv` dosyalarınızı bilgisayarınızdan doğrudan sürükleyip bırakabilirsiniz (proje klasörüne koymanıza gerek yoktur). Farklı bir Codex veri sürümünü veya birinin size e-posta ile gönderdiği bir alt kümeyi denemek için kullanışlıdır.
 
 **Kenar çubuğu — Mantar Cisimciği yolağı**
@@ -649,7 +652,8 @@ src/mbsim/
 configs/default.yaml       # CLI yapılandırması (örnek veri, PN/KC/MBON rolleri)
 configs/raw.yaml           # gerçek veri için CLI yapılandırması (ALPN/Kenyon_Cell/MBON rolleri)
 data/fixtures/             # sentetik demo verisi (git'te izlenir)
-data/raw/                  # gerçek Codex dışa aktarımı buraya konur (gitignore'da)
+data/connectome/           # uygulamayla dağıtılan Princeton konektom alt kümesi (git'te izlenir)
+data/raw/                  # kaynak Codex dışa aktarımları / yerel tam veri (gitignore'da)
 data/lab/                  # Faz 2 sinek deneyi sonuçları, toplandığında buraya (gitignore'da)
 data/clinical/             # Faz 3 insan görev sonuçları, toplandığında buraya (gitignore'da)
 tests/                     # pytest test paketi
