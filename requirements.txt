@@ -5,4 +5,8 @@ pyyaml>=6.0
 matplotlib>=3.8
 streamlit>=1.38
 plotly>=5.24
+scipy>=1.11
 pytest>=8.0
+# Install the local src/ package itself so `import mbsim` works on hosts
+# (e.g. Streamlit Community Cloud) that only run `pip install -r requirements.txt`.
+.
