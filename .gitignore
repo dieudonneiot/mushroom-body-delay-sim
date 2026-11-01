@@ -16,3 +16,6 @@ venv/
 .pytest_cache/
 outputs/
 *.log
+
+# Local guides/exports (e.g. the Turkish presentation guide PDF)
+/*.pdf

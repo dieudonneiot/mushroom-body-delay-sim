@@ -484,12 +484,17 @@ with tab_comparison:
     if df.empty:
         st.warning(t("warn_no_compare", lang))
     else:
+        # Real root_ids are 18-digit ints — beyond JS float precision, and plotly
+        # would otherwise lay them out on a numeric axis instead of one bar group
+        # per neuron — so send them as category strings.
+        node_labels = df["node"].astype(str)
         fig = go.Figure()
-        fig.add_bar(x=df["node"], y=df["healthy_time"], name=t("legend_healthy", lang))
-        fig.add_bar(x=df["node"], y=df["damaged_time"], name=t("legend_damaged", lang))
+        fig.add_bar(x=node_labels, y=df["healthy_time"], name=t("legend_healthy", lang))
+        fig.add_bar(x=node_labels, y=df["damaged_time"], name=t("legend_damaged", lang))
         fig.update_layout(
             barmode="group",
             title=t("chart_bar_title", lang),
+            xaxis_type="category",
             yaxis_title=t("axis_arrival_time", lang),
             height=450,
         )
@@ -502,7 +507,10 @@ with tab_data:
         "damaged_time": t("col_damaged_time", lang),
         "pct_deviation": t("col_pct_deviation", lang),
     }
-    st.dataframe(result.df.rename(columns=column_labels), use_container_width=True)
+    # Stringify root_ids so the browser grid doesn't round 18-digit ids to float precision.
+    st.dataframe(
+        result.df.astype({"node": str}).rename(columns=column_labels), use_container_width=True
+    )
     st.download_button(
         t("download_button", lang),
         result.df.to_csv(index=False),

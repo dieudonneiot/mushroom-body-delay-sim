@@ -1,5 +1,7 @@
 # Mushroom Body Signal-Delay Simulation
 
+**▶ Live app / Canlı uygulama: <https://mb-delay-sim.streamlit.app>** — runs in the browser, nothing to install / tarayıcıda çalışır, kurulum gerekmez.
+
 **🇬🇧 [English](#english) &nbsp;|&nbsp; 🇹🇷 [Türkçe](#türkçe) &nbsp;|&nbsp; 📖 [Glossary / Sözlük](#glossary-of-key-terms--anahtar-terimler-sözlüğü)**
 
 ---
@@ -21,9 +23,9 @@
 | **Cell type** | The functional/anatomical classification of a neuron (e.g. PN, KC, MBON); used to assign each neuron's role in this simulation. | Bir nöronun işlevsel/anatomik sınıflandırması (örn. PN, KC, MBON); bu simülasyonda her nöronun rolünü atamak için kullanılır. |
 | **Node / Edge** | Graph-theory terms: a node is a neuron, an edge is a synaptic connection between two neurons. | Graf teorisi terimleri: düğüm bir nörondur, kenar iki nöron arasındaki sinaptik bağlantıdır. |
 | **Role** (input / relay / output) | This project's label for where a neuron sits in the simulated pathway: *input* = where the signal starts, *relay* = the middle layer, *output* = where arrival time is measured. | Bu projede bir nöronun simüle edilen yolaktaki konumunu belirten etiket: *girdi* = sinyalin başladığı yer, *aktarıcı* = ara katman, *çıktı* = varış zamanının ölçüldüğü yer. |
-| **Conduction velocity** | How fast a signal travels along a connection; the simulation's speed parameter, reduced by disease severity. | Bir sinyalin bağlantı boyunca ne kadar hızlı ilerlediği; hastalık şiddetiyle azaltılan simülasyon hız parametresi. |
+| **Conduction velocity** | How fast a signal travels along a connection; the simulation's speed parameter, reduced by the Tau/Amyloid perturbations. | Bir sinyalin bağlantı boyunca ne kadar hızlı ilerlediği; Tau/Amiloid bozulmalarıyla azaltılan simülasyon hız parametresi. |
 | **Firing threshold** | The amount of accumulated incoming signal a neuron needs before it "fires" and forwards the signal onward. | Bir nöronun "ateşlenip" sinyali sonraki nöronlara iletmesi için ihtiyaç duyduğu birikmiş gelen sinyal miktarı. |
-| **Disease severity** | The simulation's single knob for how much Alzheimer's-like damage is applied (0 = none, 1 = maximum); currently mapped through a placeholder linear function. | Simülasyonun, ne kadar Alzheimer benzeri hasar uygulanacağını belirleyen tek kadranı (0 = yok, 1 = maksimum); şu anda yer tutucu bir doğrusal fonksiyon üzerinden hesaplanır. |
+| **Perturbation / intensity** | One Alzheimer's-like impairment (Tau, Beta-Amyloid, GABA, APL) added in the app's Perturbations panel, with an intensity from 0% (none) to 100% (maximum). Several can be stacked. Mapped through placeholder linear functions for now. | Uygulamanın Bozulmalar panelinden eklenen, Alzheimer benzeri tek bir bozulma (Tau, Beta-Amiloid, GABA, APL) ve %0 (yok) ile %100 (maksimum) arasındaki şiddeti. Birden fazlası üst üste eklenebilir. Şimdilik yer tutucu doğrusal fonksiyonlar üzerinden hesaplanır. |
 | **Slowdown function** | The pluggable function (in `damage.py`) converting a severity value into a conduction-velocity reduction; meant to be replaced with a literature-derived one. | Bir şiddet değerini iletim hızı azalmasına dönüştüren, eklenebilir (`damage.py` içindeki) fonksiyon; literatüre dayalı bir fonksiyonla değiştirilmek üzere tasarlanmıştır. |
 | **Arrival time** | The simulated time at which a signal first reaches (and "fires") a given neuron, measured from t=0 at the input neurons. | Bir sinyalin, girdi nöronlarında t=0'dan başlayarak belirli bir nörona ilk ulaştığı (ve "ateşlendiği") simüle edilmiş zaman. |
 | **% deviation** | How much later the damaged network's arrival time is compared to the healthy network's, as a percentage. | Hasarlı ağın varış zamanının, sağlıklı ağa kıyasla yüzde kaç daha geç olduğu. |
@@ -46,7 +48,35 @@ Pipeline: connectome CSVs -> Mushroom Body pathway subgraph (e.g. PN -> KC -> MB
 -> event-driven signal propagation -> healthy vs. damaged comparison, in both an
 interactive UI and a batch CLI.
 
-### 1. Setup
+### What the system does
+
+1. **Loads a real fly-brain wiring map.** The app ships with a subset of the
+   FlyWire/Codex connectome: 5,958 Mushroom Body neurons (685 ALPN input,
+   5,177 Kenyon cell relay, 96 MBON output) and 79,423 synaptic connections.
+2. **Sends a signal through it twice.** It runs the signal once through a
+   healthy network and once through a damaged copy, then records when each
+   output neuron fires.
+3. **Applies Alzheimer's-like damage.** You choose the damage in the
+   **Perturbations** panel. *Tau* and *Beta-Amyloid* slow conduction, while
+   *GABA* and *APL* raise the firing threshold. Each one has its own
+   intensity from 0 to 100%, and you can stack several.
+4. **Measures the result.** It reports the extra delay in milliseconds, the %
+   deviation per output neuron, a Weber-Fechner time-perception estimate, and
+   an animated side-by-side playback of the two networks.
+
+All damage curves, the ms calibration and the perception model are
+**placeholders** until literature or lab values are available. The numbers
+show how the model behaves; they are not clinical predictions.
+
+### Quick start
+
+- **Just use it:** open <https://mb-delay-sim.streamlit.app>. The real
+  connectome loads by default, and you can switch the language to Türkçe at
+  the top of the sidebar.
+- **Test it:** follow the checklist in [section 8](#8-how-to-test).
+- **Run or develop it locally:** see Setup below.
+
+### 1. Setup (local development only)
 
 ```
 git clone https://github.com/dieudonneiot/mushroom-body-delay-sim.git
@@ -56,8 +86,9 @@ python -m venv .venv
 pip install -e ".[dev]"
 ```
 
-Requires Python 3.10+. The repo is currently **private** — ask to be added as
-a GitHub collaborator before cloning if you don't already have access.
+Requires Python 3.10+. The repository is public, so anyone can clone it. You
+only need a local setup to change the code or run the tests; to use the app,
+open the live link above.
 
 This installs the `mbsim` package plus `streamlit`, `plotly`, `networkx`, `pandas`,
 `matplotlib`, `pyyaml`, and (via `[dev]`) `pytest`.
@@ -92,24 +123,23 @@ Once both files are in place, either edit `configs/default.yaml`
 ready-made [configs/raw.yaml](configs/raw.yaml), which already has both set —
 see "CLI" below.
 
-Until real data is in place, everything runs against the small synthetic
-graph in `data/fixtures/` (3 PN, 6 KC, 2 MBON neurons, fully wired) so you can
-try every feature immediately with no setup.
+You don't need this step to use the app. A ready-made real-data subset is
+already in `data/connectome/` and loads by default (see
+[data/connectome/README.md](data/connectome/README.md)), and the small
+synthetic graph in `data/fixtures/` (3 PN, 6 KC, 2 MBON neurons, fully wired)
+is always available for quick checks.
 
-### 3. Interactive UI (recommended)
+### 3. Interactive UI
+
+The app is deployed on Streamlit Community Cloud at
+<https://mb-delay-sim.streamlit.app> and redeploys automatically on every push
+to `main`. To run it locally instead:
 
 ```
 streamlit run app.py
 ```
 
-**One-command launch:** `.\sirin.ps1` (PowerShell) or `./sirin.sh` (Git Bash/WSL/macOS/Linux) —
-or just double-click `sirin.bat` on Windows. This first pulls the latest `main`
-and installs/updates dependencies, then starts the app — all best-effort: if
-there's no network or git credentials aren't cached, it prints a one-line
-warning and launches anyway with whatever code is already on disk, so it
-never hangs or blocks (safe to run right before a live demo).
-
-This opens a browser tab. Every detail of what's on screen:
+Every detail of what's on screen:
 
 **Language toggle** — at the very top of the sidebar, a switch between
 **English** and **Türkçe**. It re-translates every label, button, tab, warning,
@@ -136,12 +166,25 @@ hardcoded to PN/KC/MBON, those are just the defaults when present.
 **Sidebar — Simulation parameters** (all update the view live, no button to press)
 - *Healthy conduction velocity* (0.1–3.0, default 1.0) — baseline signal speed in the undamaged network. Higher = faster signal.
 - *Firing threshold* (0.5–5.0, default 1.0) — how much accumulated incoming signal a neuron needs before it "fires" and forwards the signal onward.
-- *Disease severity* (0.0–1.0, default 0.3) — the Alzheimer's-damage knob. 0 = no damage (identical to healthy), 1 = maximum slowdown. This currently maps through a placeholder linear function (`mbsim/damage.py`); swap in a literature-derived one when the medical team provides it (see "Extending the damage model" below).
+**Sidebar — Perturbations** (the Alzheimer's-damage controls)
+- Click **＋ Add Perturbation** to add a damage row. Pick its *Impairment* type and set an *Intensity (%)* from 0 to 100 with the slider or the number box. Rows stack, and the **✕** button removes one.
+  - *Tau Protein* and *Beta-Amyloid* lower conduction velocity on the edges they target.
+  - *GABA Dysfunction* and *APL Neuron Impairment* raise the firing threshold on the neurons they target. APL needs a root_id typed into its field, otherwise it has no effect.
+- With no rows, healthy and damaged are identical, so a 0% deviation is expected.
+- The captions above the tabs show how many edges and neurons each channel affects and the mean severity.
+- Intensities map through placeholder linear curves in `mbsim/damage.py`; see "Extending with a real damage model" below.
+- *Calibration (placeholder)* expander: milliseconds per simulated time unit, used for the ms readouts.
+
+**Main area — "Perception & Delay" tab** (opens first)
+- *Physical Conduction Delay*: mean healthy delay, mean damaged delay and the net Δ, all in ms.
+- *Weber-Fechner Time Perception Deviation*: perceived-vs-physical time curves for healthy and damaged, with the % deviation. This uses a placeholder model (`mbsim/perception.py`).
+- *Trial-based Weber fraction estimate* expander: runs N noisy trials when you click **▶ Run trials** (see section 6).
 
 **Main area — "Network View" tab**
-- Four KPI cards at the top: mean % delay deviation, median % delay deviation, the damaged conduction velocity actually used (derived from the severity slider), and how many output neurons the signal reached out of the total configured.
-- Two side-by-side **interactive** network graphs — "Healthy network" and "Damaged network" — built from the same NetworkX graph, laid out left-to-right (input → relay → output). Node color = signal arrival time (a shared color scale across both graphs so the comparison is visually fair); gray nodes were never reached by the signal. **Hover over any neuron** to see its id, role, in-degree, out-degree, and (if reached) exact arrival time. **Scroll/drag to zoom and pan** — useful once you load the real connectome with hundreds of Kenyon cells.
-- A collapsible "Show pathway structure" panel below — the same interactive graph, but colored by role (input/relay/output) instead of arrival time, so you can inspect the wiring itself without any simulation overlay.
+- Five KPI cards at the top: mean and median % delay deviation, the mean damaged conduction velocity and the mean damaged firing threshold over the targeted edges and neurons (shown as `n/a` when that channel isn't used), and how many output neurons the signal reached out of the total.
+- A **delay-difference** network graph laid out left to right (input → relay → output). Each neuron is colored by how much later (red) or earlier (blue) it fired in the damaged network than in the healthy one. **Hover over any neuron** to see its id, role, in- and out-degree and arrival times. **Scroll or drag to zoom and pan.**
+- A collapsible "Show absolute arrival times" panel holds the healthy and damaged graphs side by side, colored by arrival time on a shared scale. Gray nodes were never reached.
+- A collapsible "Show pathway structure" panel shows the same graph colored by role, so you can inspect the wiring without any simulation overlay.
 - Marker size, node labels, and edge opacity all scale down automatically on large graphs (real-connectome scale: thousands of nodes, tens of thousands of edges), so the view stays legible instead of rendering as a solid blob — no configuration needed.
 
 **Main area — "Comparison" tab**
@@ -274,38 +317,54 @@ loads a clearly-labeled placeholder dataset instead, so the comparison
 mechanism itself can be demonstrated (e.g. for a presentation) before real
 data lands.
 
-### 8. Tests & verifying everything end-to-end
+### 8. How to test
 
-Automated:
+#### A. In the browser (no install, ~5 minutes)
+
+Open <https://mb-delay-sim.streamlit.app>. If it shows a "wake up" button,
+the free app was asleep: click it and wait about 30 seconds. Then check each
+step against the expected result. The values come from the live app with the
+default data source, *Bundled connectome (Princeton export)*.
+
+| # | Do this | Expected result |
+|---|---|---|
+| 1 | Look at the caption under the title | `Graph: 5958 neurons, 79423 synaptic connections (relay: 5177, output: 96, input: 685)` |
+| 2 | Switch the sidebar language to **Türkçe**, then back | Every label, tab and chart title changes language, and your settings stay |
+| 3 | Without adding perturbations, open **Perception & Delay** | Healthy and damaged delay are both **0.34 ms**, the deviation is **0%**, and a blue note explains that 0% is expected |
+| 4 | Click **＋ Add Perturbation**, keep *Tau Protein*, type **40** in the intensity box | Caption: `79423/79423 edges affected (mean severity 40.0%)`. Delay goes **0.34 → 0.57 ms (+0.23)** and time-perception deviation is **66.7%** |
+| 5 | Open the *Trial-based Weber fraction* expander and click **▶ Run trials** | After a few seconds, healthy and damaged Weber fractions appear (about 6% each with the defaults) |
+| 6 | **Network View** tab | KPIs: mean and median deviation **66.7%**, damaged velocity **0.600**, threshold `n/a`, outputs reached **96/96**. The graph shows red (later) Kenyon cells |
+| 7 | **Comparison** tab | Grouped healthy and damaged bars for each output neuron, with the damaged bar higher everywhere |
+| 8 | **Data** tab, then **Download comparison.csv** | 96 rows, each with `% deviation` ≈ 66.67, and a CSV downloads |
+| 9 | **Live Propagation** tab: press **▶ Play**, or drag the slider to the middle | At t ≈ 0.056 the readout shows about **4380/5958** neurons fired in the healthy network and **1889/5958** in the damaged one |
+| 10 | **Phase 2/3 Validation** tab: click **▶ Load synthetic example data** | Simulation 66.7%, fly 30.0% and human 30.0%, both marked **✅ Yes** (same direction) |
+| 11 | Add a second perturbation, **GABA Dysfunction** at 50% | The firing-threshold caption now counts affected neurons, the *Damaged firing threshold* KPI gets a value, and the deviations change |
+| 12 | Set any intensity to **100** | A warning explains that near-total blockage makes the numbers look extreme by design |
+| 13 | Data source → **Fixture (demo data)** | The small synthetic graph loads (3 PN, 6 KC, 2 MBON), with roles defaulting to PN/KC/MBON |
+
+#### B. Automated tests (local)
 
 ```
+pip install -e ".[dev]"
 pytest
 ```
 
 All tests run against the synthetic fixture in `data/fixtures/`, so they don't
-require the real Codex download.
+need any real Codex download.
 
-To manually verify the full pipeline yourself, in order:
+#### C. Batch CLI (local)
 
-1. `streamlit run app.py` with the default **Fixture (demo data)** source
-   selected — confirms the UI, both languages, and all four tabs work with
-   zero setup.
-2. Get the real data into `data/raw/` (step 2 above), then in the app switch
-   **Data source** to **data/raw/ (local files)** — the pathway dropdowns
-   should auto-populate with real labels like `ALPN`, `Kenyon_Cell`, `MBON`,
-   `DAN`. Check the KPI card "Output neurons reached" — for the full FAFB
-   Mushroom Body pathway at default parameters this should read 96/96.
-3. `python -m mbsim.cli --config configs/raw.yaml` — should finish in well
-   under a minute and print the same reached-count in its summary, plus write
-   all five files under `outputs/`.
-4. Open the "Live Propagation" tab, press **▶ Play**, and confirm the damaged
-   panel's fired-count visibly trails the healthy panel's mid-animation (with
-   default parameters on the real dataset, the gap is largest around
-   t≈0.04–0.08 — e.g. roughly 3300 vs. 1500 nodes fired at the same instant).
+```
+python -m mbsim.cli --config configs/default.yaml
+```
 
-If any of these disagree with what's described here, something in your local
-data or config differs from what this README assumes — check
-`data/raw/README.md` for the exact expected columns and file names first.
+This runs on the fixture with a 30% Tau perturbation, prints the comparison and
+writes five files under `outputs/`. To run it on the bundled real subset, copy
+`configs/raw.yaml` and set `raw_dir: data/connectome`.
+
+If any of these disagree with what's described here, check
+`data/connectome/README.md` or `data/raw/README.md` for the expected columns
+and file names first.
 
 ### Project structure
 
@@ -327,7 +386,9 @@ src/mbsim/
   visualize.py            # static matplotlib figures (used by the CLI)
   plotly_viz.py           # interactive Plotly figures + propagation animation (used by the app)
   i18n.py                 # English/Turkish UI string translations
+  inference.py            # Phase A inverse inference (ABC + simulation-based calibration), not in the UI yet
   cli.py                  # batch entrypoint
+scripts/prepare_connectome.py  # builds data/connectome/ from raw Codex exports
 configs/default.yaml      # CLI configuration (fixture data, PN/KC/MBON roles)
 configs/raw.yaml          # CLI configuration for real data (ALPN/Kenyon_Cell/MBON roles)
 data/fixtures/            # synthetic demo data (tracked in git)
@@ -352,7 +413,38 @@ sinyal iletimini nasıl geciktirdiğini, FlyWire/Codex konektomunu
 sağlıklı ve hasarlı ağların karşılaştırılması; hem etkileşimli bir arayüzde hem
 de toplu (batch) bir CLI aracılığıyla.
 
-### 1. Kurulum
+### Sistem ne yapar?
+
+1. **Gerçek bir sinek beyni bağlantı haritasını yükler.** Uygulama,
+   FlyWire/Codex konektomunun bir alt kümesiyle gelir: 5.958 Mantar
+   Cisimciği nöronu (685 ALPN girdi, 5.177 Kenyon hücresi aktarıcı, 96 MBON
+   çıktı) ve 79.423 sinaptik bağlantı.
+2. **Sinyali iki kez gönderir.** Sinyal bir kez sağlıklı ağda, bir kez de
+   hasarlı kopyada yayılır; her çıktı nöronunun ne zaman ateşlendiği
+   kaydedilir.
+3. **Alzheimer benzeri hasar uygular.** Hasarı **Bozulmalar** panelinden
+   siz seçersiniz. *Tau* ve *Beta-Amiloid* iletimi yavaşlatır; *GABA* ve
+   *APL* ateşleme eşiğini yükseltir. Her birinin %0–100 arası kendi şiddeti
+   vardır ve birden fazlasını üst üste ekleyebilirsiniz.
+4. **Sonucu ölçer.** Milisaniye cinsinden ek gecikmeyi, çıktı nöronu başına
+   % sapmayı, Weber-Fechner zaman algısı tahminini ve iki ağın yan yana
+   canlandırılmış oynatımını gösterir.
+
+Hasar eğrileri, ms kalibrasyonu ve algı modeli, literatür veya laboratuvar
+değerleri gelene kadar **yer tutucudur**. Sayılar modelin nasıl davrandığını
+gösterir; klinik bir tahmin değildir.
+
+### Hızlı başlangıç
+
+- **Sadece kullanmak için:** <https://mb-delay-sim.streamlit.app> adresini
+  açın. Gerçek konektom varsayılan olarak yüklenir; kenar çubuğunun en
+  üstünden dili Türkçe yapabilirsiniz.
+- **Test etmek için:** [8. bölümdeki](#8-nasıl-test-edilir) kontrol listesini
+  izleyin.
+- **Yerelde çalıştırmak veya geliştirmek için:** aşağıdaki Kurulum
+  bölümüne bakın.
+
+### 1. Kurulum (yalnızca yerel geliştirme için)
 
 ```
 git clone https://github.com/dieudonneiot/mushroom-body-delay-sim.git
@@ -362,9 +454,10 @@ python -m venv .venv
 pip install -e ".[dev]"
 ```
 
-Python 3.10+ gerektirir. Depo şu anda **özel (private)** — erişiminiz yoksa
-klonlamadan önce GitHub üzerinde işbirlikçi (collaborator) olarak
-eklenmenizi isteyin.
+Python 3.10+ gerektirir. Depo herkese açıktır (public), herkes klonlayabilir.
+Yerel kurulum yalnızca kodu değiştirmek veya testleri çalıştırmak için
+gereklidir; uygulamayı kullanmak için yukarıdaki canlı bağlantıyı açmanız
+yeterlidir.
 
 Bu komut `mbsim` paketini ve `streamlit`, `plotly`, `networkx`, `pandas`,
 `matplotlib`, `pyyaml` ile (`[dev]` sayesinde) `pytest`'i kurar.
@@ -402,26 +495,24 @@ düzenleyin (`data.mode: raw` yapın ve `roles`'u gerçek etiketlerle güncelley
 ya da doğrudan hazır [configs/raw.yaml](configs/raw.yaml) dosyasını kullanın —
 ikisi de zaten ayarlanmıştır, aşağıdaki "CLI" bölümüne bakın.
 
-Gerçek veri yerine konana kadar her şey `data/fixtures/` içindeki küçük
-sentetik grafik (3 PN, 6 KC, 2 MBON nöronu, tamamen bağlı) üzerinde çalışır;
-böylece hiçbir kurulum yapmadan tüm özellikleri hemen deneyebilirsiniz.
+Uygulamayı kullanmak için bu adıma gerek yoktur. Gerçek veriden hazırlanmış
+bir alt küme zaten `data/connectome/` içindedir ve varsayılan olarak yüklenir
+(bkz. [data/connectome/README.md](data/connectome/README.md)); `data/fixtures/`
+içindeki küçük sentetik grafik (3 PN, 6 KC, 2 MBON nöronu, tamamen bağlı) da
+hızlı kontroller için her zaman kullanılabilir.
 
-### 3. Etkileşimli Arayüz (önerilen)
+### 3. Etkileşimli Arayüz
+
+Uygulama Streamlit Community Cloud üzerinde
+<https://mb-delay-sim.streamlit.app> adresinde yayındadır ve `main` dalına
+yapılan her push'ta kendiliğinden yeniden dağıtılır. Yerelde çalıştırmak
+için:
 
 ```
 streamlit run app.py
 ```
 
-**Tek komutla başlatma:** `.\sirin.ps1` (PowerShell) veya `./sirin.sh` (Git
-Bash/WSL/macOS/Linux) — Windows'ta `sirin.bat` dosyasına çift tıklamak da
-yeterli. Bu, önce en güncel `main` dalını çeker ve bağımlılıkları
-kurar/günceller, ardından uygulamayı başlatır — hepsi "elden geldiğince":
-ağ yoksa veya git kimlik bilgileri önbelleğe alınmamışsa, tek satırlık bir
-uyarı yazdırıp yine de eldeki koduyla başlatmaya devam eder; bu yüzden asla
-takılıp kalmaz veya engellenmez (canlı bir sunumdan hemen önce çalıştırmak
-güvenlidir).
-
-Bu komut tarayıcıda bir sekme açar. Ekrandaki her şeyin ayrıntısı:
+Ekrandaki her şeyin ayrıntısı:
 
 **Dil seçici (Language toggle)** — kenar çubuğunun en üstünde, **English** ve
 **Türkçe** arasında bir geçiş anahtarı. Her etiketi, düğmeyi, sekmeyi, uyarıyı,
@@ -450,12 +541,25 @@ kullanılan varsayılan değerlerdir.
 **Kenar çubuğu — Simülasyon parametreleri** (hepsi anlık olarak günceller, tıklanacak bir düğme yoktur)
 - *Sağlıklı iletim hızı* (0.1–3.0, varsayılan 1.0) — hasarsız ağdaki temel sinyal hızı. Daha yüksek = daha hızlı sinyal.
 - *Ateşleme eşiği* (0.5–5.0, varsayılan 1.0) — bir nöronun "ateşlenip" sinyali ileriye iletmesi için ne kadar birikmiş girdi sinyaline ihtiyacı olduğu.
-- *Hastalık şiddeti* (0.0–1.0, varsayılan 0.3) — Alzheimer hasarı kadranı. 0 = hasar yok (sağlıklı ile aynı), 1 = maksimum yavaşlama. Şu anda yer tutucu (placeholder) doğrusal bir fonksiyon (`mbsim/damage.py`) üzerinden hesaplanır; tıp ekibi literatüre dayalı bir fonksiyon sağladığında bunu değiştirebilirsiniz (aşağıdaki "Gerçek hasar modeliyle genişletme" bölümüne bakın).
+**Kenar çubuğu — Bozulmalar** (Alzheimer hasarı kontrolleri)
+- Bir hasar satırı eklemek için **＋ Bozulma Ekle**'ye tıklayın. *Bozulma tipi*ni seçin ve *Şiddet (%)* değerini 0–100 arasında kaydırıcıyla veya sayı kutusuyla ayarlayın. Satırlar üst üste eklenir; **✕** düğmesi bir satırı kaldırır.
+  - *Tau Proteini* ve *Beta-Amiloid*, hedefledikleri bağlantılarda iletim hızını düşürür.
+  - *GABA İşlev Bozukluğu* ve *APL Nöron Bozulması*, hedefledikleri nöronlarda ateşleme eşiğini yükseltir. APL'nin etkili olması için alanına bir root_id girilmesi gerekir; girilmezse etkisi olmaz.
+- Hiç satır yoksa sağlıklı ve hasarlı ağ aynıdır; bu durumda %0 sapma beklenen sonuçtur.
+- Sekmelerin üstündeki açıklamalar, her kanalın kaç bağlantıyı ve nöronu etkilediğini ve ortalama şiddeti gösterir.
+- Şiddetler `mbsim/damage.py` içindeki yer tutucu doğrusal eğrilerden geçer; aşağıdaki "Gerçek bir hasar modeliyle genişletme" bölümüne bakın.
+- *Kalibrasyon (yer tutucu)* paneli: simüle edilmiş zaman birimi başına milisaniye; ms cinsinden gösterilen değerlerde kullanılır.
+
+**Ana alan — "Algı ve Gecikme" sekmesi** (ilk açılan sekme)
+- *Fiziksel İletim Gecikmesi*: ortalama sağlıklı gecikme, ortalama hasarlı gecikme ve aradaki net fark (Δ), hepsi ms cinsinden.
+- *Weber-Fechner Zaman Algısı Sapması*: sağlıklı ve hasarlı için algılanan-fiziksel zaman eğrileri ve % sapma. Yer tutucu bir model kullanır (`mbsim/perception.py`).
+- *Deneme-tabanlı Weber kesri tahmini* paneli: **▶ Denemeleri çalıştır**'a tıklayınca N gürültülü deneme çalıştırır (bkz. 6. bölüm).
 
 **Ana alan — "Ağ Görünümü" sekmesi**
-- Üstte dört KPI kartı: ortalama % gecikme sapması, medyan % gecikme sapması, gerçekte kullanılan hasarlı iletim hızı (hastalık şiddeti kaydırıcısından türetilir) ve sinyalin, yapılandırılan toplam çıktı nöronundan kaçına ulaştığı.
-- Yan yana iki **etkileşimli** ağ grafiği — "Sağlıklı ağ" ve "Hasarlı ağ" — aynı NetworkX grafiğinden oluşturulmuş, soldan sağa (girdi → aktarıcı → çıktı) düzenlenmiştir. Nöron rengi = sinyal varış zamanı (karşılaştırmanın görsel olarak adil olması için her iki grafikte de ortak bir renk skalası kullanılır); gri nöronlara sinyal hiç ulaşmamıştır. **Herhangi bir nöronun üzerine gelerek** kimliğini, rolünü, gelen/giden bağlantı sayısını ve (ulaşıldıysa) tam varış zamanını görebilirsiniz. **Yakınlaştırmak ve kaydırmak için kaydırın/sürükleyin** — gerçek konektomu yüzlerce Kenyon hücresiyle yüklediğinizde faydalıdır.
-- Altta daraltılabilir bir "Yolak yapısını göster" paneli — aynı etkileşimli grafik, ancak varış zamanı yerine role göre (girdi/aktarıcı/çıktı) renklendirilmiştir; böylece herhangi bir simülasyon katmanı olmadan bağlantı yapısını inceleyebilirsiniz.
+- Üstte beş KPI kartı: ortalama ve medyan % gecikme sapması, hedeflenen bağlantı ve nöronlardaki ortalama hasarlı iletim hızı ile ortalama hasarlı ateşleme eşiği (o kanal kullanılmıyorsa `n/a` görünür) ve sinyalin toplam çıktı nöronundan kaçına ulaştığı.
+- Soldan sağa (girdi → aktarıcı → çıktı) düzenlenmiş bir **gecikme farkı** ağ grafiği. Her nöron, hasarlı ağda sağlıklı ağa göre ne kadar geç (kırmızı) veya erken (mavi) ateşlendiğine göre renklendirilir. **Bir nöronun üzerine gelerek** kimliğini, rolünü, gelen/giden bağlantı sayısını ve varış zamanlarını görebilirsiniz. **Yakınlaştırmak ve kaydırmak için kaydırın veya sürükleyin.**
+- Daraltılabilir "Mutlak varış zamanlarını göster" paneli, sağlıklı ve hasarlı grafikleri ortak bir renk skalasında, varış zamanına göre renklendirilmiş olarak yan yana gösterir. Gri nöronlara sinyal hiç ulaşmamıştır.
+- Daraltılabilir "Yolak yapısını göster" paneli aynı grafiği role göre renklendirir; böylece simülasyon katmanı olmadan bağlantı yapısını inceleyebilirsiniz.
 - Nokta boyutu, nöron etiketleri ve kenar (edge) opaklığı büyük grafiklerde (gerçek konektom ölçeğinde: binlerce nöron, on binlerce bağlantı) otomatik olarak küçülür/azalır; böylece görünüm bir yapılandırma gerekmeden okunaklı kalır, katı bir bulanıklığa dönüşmez.
 
 **Ana alan — "Karşılaştırma" sekmesi**
@@ -592,41 +696,56 @@ açıkça etiketlenmiş bir yer tutucu veri seti yükler; böylece karşılaşt�
 mekanizmasının kendisi, gerçek veri elde edilmeden önce (örn. bir sunum için)
 gösterilebilir.
 
-### 8. Testler ve her şeyi uçtan uca doğrulama
+### 8. Nasıl test edilir
 
-Otomatik:
+#### A. Tarayıcıda (kurulum yok, ~5 dakika)
+
+<https://mb-delay-sim.streamlit.app> adresini açın. Bir "wake up" düğmesi
+görürseniz ücretsiz uygulama uykudadır; tıklayın ve yaklaşık 30 saniye
+bekleyin. Ardından her adımı beklenen sonuçla karşılaştırın. Değerler,
+varsayılan veri kaynağıyla (*Dahil edilen konektom (Princeton dışa
+aktarımı)*) canlı uygulamadan alınmıştır.
+
+| # | Yapılacak | Beklenen sonuç |
+|---|---|---|
+| 1 | Başlığın altındaki açıklamaya bakın | `Grafik: 5958 nöron, 79423 sinaptik bağlantı (aktarıcı: 5177, çıktı: 96, girdi: 685)` |
+| 2 | Kenar çubuğunda dili **English** yapın, sonra geri **Türkçe** yapın | Tüm etiketler, sekmeler ve grafik başlıkları dil değiştirir; ayarlarınız korunur |
+| 3 | Bozulma eklemeden **Algı ve Gecikme** sekmesine bakın | Sağlıklı ve hasarlı gecikme ikisi de **0.34 ms**, sapma **%0**; mavi bir not %0'ın beklenen sonuç olduğunu açıklar |
+| 4 | **＋ Bozulma Ekle**'ye tıklayın, *Tau Proteini* kalsın, şiddet kutusuna **40** yazın | Açıklama: `79423/79423 bağlantı etkilendi (ortalama şiddet %40.0)`. Gecikme **0.34 → 0.57 ms (+0.23)**, zaman algısı sapması **%66.7** olur |
+| 5 | *Deneme-tabanlı Weber kesri* panelini açıp **▶ Denemeleri çalıştır**'a tıklayın | Birkaç saniye sonra sağlıklı ve hasarlı Weber kesirleri görünür (varsayılanlarla her biri yaklaşık %6) |
+| 6 | **Ağ Görünümü** sekmesi | KPI'lar: ortalama ve medyan sapma **%66.7**, hasarlı hız **0.600**, eşik `n/a`, ulaşılan çıktı **96/96**. Grafikte kırmızı (gecikmiş) Kenyon hücreleri görünür |
+| 7 | **Karşılaştırma** sekmesi | Her çıktı nöronu için yan yana sağlıklı ve hasarlı çubuklar; hasarlı çubuk her yerde daha yüksek |
+| 8 | **Veri** sekmesinde **comparison.csv dosyasını indir**'e tıklayın | 96 satır, her birinde `% sapma` ≈ 66.67; bir CSV dosyası iner |
+| 9 | **Canlı Yayılım** sekmesinde **▶ Oynat**'a basın veya kaydırıcıyı ortaya sürükleyin | t ≈ 0.056'da okuma, sağlıklı ağda yaklaşık **4380/5958**, hasarlı ağda **1889/5958** ateşlenmiş nöron gösterir |
+| 10 | **Faz 2/3 Doğrulama** sekmesinde **▶ Sentetik örnek veriyi yükle**'ye tıklayın | Simülasyon %66.7, sinek %30.0 ve insan %30.0; ikisi de **✅ Evet** (aynı yön) |
+| 11 | İkinci bir bozulma ekleyin: **GABA İşlev Bozukluğu**, %50 | Ateşleme eşiği açıklaması artık etkilenen nöronları sayar, *Hasarlı ateşleme eşiği* KPI'ı bir değer alır ve sapmalar değişir |
+| 12 | Herhangi bir şiddeti **100** yapın | Bir uyarı, iletimin neredeyse tamamen durması nedeniyle sayıların tasarım gereği aşırı görüneceğini açıklar |
+| 13 | Veri kaynağı → **Örnek veri (demo)** | Küçük sentetik grafik yüklenir (3 PN, 6 KC, 2 MBON); roller varsayılan olarak PN/KC/MBON olur |
+
+#### B. Otomatik testler (yerel)
 
 ```
+pip install -e ".[dev]"
 pytest
 ```
 
-Tüm testler `data/fixtures/` içindeki sentetik veriye karşı çalışır; bu yüzden
-gerçek Codex indirmesine ihtiyaç duymazlar.
+Tüm testler `data/fixtures/` içindeki sentetik veriye karşı çalışır; gerçek
+Codex indirmesine ihtiyaç duymazlar.
 
-Tüm işlem hattını elle doğrulamak için, sırasıyla:
+#### C. Toplu CLI (yerel)
 
-1. Varsayılan **Örnek veri (demo)** kaynağı seçiliyken `streamlit run app.py`
-   çalıştırın — arayüzün, her iki dilin ve dört sekmenin tamamının hiçbir
-   kurulum yapmadan çalıştığını doğrular.
-2. Gerçek veriyi `data/raw/` içine koyun (yukarıdaki 2. adım), ardından
-   uygulamada **Veri kaynağı**'nı **data/raw/ (yerel dosyalar)** olarak
-   değiştirin — yolak açılır menüleri `ALPN`, `Kenyon_Cell`, `MBON`, `DAN` gibi
-   gerçek etiketlerle otomatik doldurulmalıdır. "Ulaşılan çıktı nöronu" KPI
-   kartını kontrol edin — tam FAFB Mantar Cisimciği yolağı için varsayılan
-   parametrelerle bu 96/96 olarak görünmelidir.
-3. `python -m mbsim.cli --config configs/raw.yaml` — bir dakikanın altında
-   tamamlanmalı ve özetinde aynı ulaşma sayısını yazdırmalı, ayrıca
-   `outputs/` altına beş dosyanın tamamını yazmalıdır.
-4. "Canlı Yayılım" sekmesini açın, **▶ Oynat**'a basın ve animasyonun
-   ortasında hasarlı paneldeki ateşlenme sayısının sağlıklı panelin gerisinde
-   kaldığını doğrulayın (gerçek veri setinde varsayılan parametrelerle, fark
-   en büyük halini t≈0.04–0.08 civarında alır — örn. aynı anda kabaca 3300'e
-   karşı 1500 nöron ateşlenmiş olur).
+```
+python -m mbsim.cli --config configs/default.yaml
+```
 
-Bunlardan herhangi biri burada anlatılanla uyuşmuyorsa, yerel verinizde veya
-yapılandırmanızda bu README'nin varsaydığından farklı bir şey var demektir —
-önce beklenen tam sütunlar ve dosya adları için `data/raw/README.md`
-dosyasına bakın.
+Bu komut örnek veri üzerinde %30 Tau bozulmasıyla çalışır, karşılaştırmayı
+yazdırır ve `outputs/` altına beş dosya yazar. Dahil edilen gerçek alt küme
+üzerinde çalıştırmak için `configs/raw.yaml` dosyasını kopyalayıp
+`raw_dir: data/connectome` yapın.
+
+Bunlardan herhangi biri burada anlatılanla uyuşmuyorsa, önce beklenen
+sütunlar ve dosya adları için `data/connectome/README.md` veya
+`data/raw/README.md` dosyasına bakın.
 
 ### Proje yapısı
 
@@ -648,7 +767,9 @@ src/mbsim/
   visualize.py                # statik matplotlib grafikleri (CLI tarafından kullanılır)
   plotly_viz.py                 # etkileşimli Plotly grafikleri + yayılım animasyonu (uygulama tarafından kullanılır)
   i18n.py                        # İngilizce/Türkçe arayüz metni çevirileri
+  inference.py                   # Faz A ters çıkarım (ABC + simülasyon tabanlı kalibrasyon), henüz arayüzde değil
   cli.py                          # toplu (batch) giriş noktası
+scripts/prepare_connectome.py  # data/connectome/ klasörünü ham Codex dışa aktarımlarından oluşturur
 configs/default.yaml       # CLI yapılandırması (örnek veri, PN/KC/MBON rolleri)
 configs/raw.yaml           # gerçek veri için CLI yapılandırması (ALPN/Kenyon_Cell/MBON rolleri)
 data/fixtures/             # sentetik demo verisi (git'te izlenir)
