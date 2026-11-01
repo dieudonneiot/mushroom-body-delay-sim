@@ -1,6 +1,6 @@
 # Mushroom Body Signal-Delay Simulation
 
-**▶ Live app / Canlı uygulama: <https://mb-delay-sim.streamlit.app>** — runs in the browser, nothing to install / tarayıcıda çalışır, kurulum gerekmez.
+**▶ Live app / Canlı uygulama: [mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true)** — runs in the browser, nothing to install / tarayıcıda çalışır, kurulum gerekmez.
 
 **🇬🇧 [English](#english) &nbsp;|&nbsp; 🇹🇷 [Türkçe](#türkçe) &nbsp;|&nbsp; 📖 [Glossary / Sözlük](#glossary-of-key-terms--anahtar-terimler-sözlüğü)**
 
@@ -70,7 +70,7 @@ show how the model behaves; they are not clinical predictions.
 
 ### Quick start
 
-- **Just use it:** open <https://mb-delay-sim.streamlit.app>. The real
+- **Just use it:** open [mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true). The real
   connectome loads by default, and you can switch the language to Türkçe at
   the top of the sidebar.
 - **Test it:** follow the checklist in [section 8](#8-how-to-test).
@@ -132,7 +132,7 @@ is always available for quick checks.
 ### 3. Interactive UI
 
 The app is deployed on Streamlit Community Cloud at
-<https://mb-delay-sim.streamlit.app> and redeploys automatically on every push
+[mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true) and redeploys automatically on every push
 to `main`. To run it locally instead:
 
 ```
@@ -321,7 +321,7 @@ data lands.
 
 #### A. In the browser (no install, ~5 minutes)
 
-Open <https://mb-delay-sim.streamlit.app>. If it shows a "wake up" button,
+Open [mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true). If it shows a "wake up" button,
 the free app was asleep: click it and wait about 30 seconds. Then check each
 step against the expected result. The values come from the live app with the
 default data source, *Bundled connectome (Princeton export)*.
@@ -338,9 +338,9 @@ default data source, *Bundled connectome (Princeton export)*.
 | 8 | **Data** tab, then **Download comparison.csv** | 96 rows, each with `% deviation` ≈ 66.67, and a CSV downloads |
 | 9 | **Live Propagation** tab: press **▶ Play**, or drag the slider to the middle | At t ≈ 0.056 the readout shows about **4380/5958** neurons fired in the healthy network and **1889/5958** in the damaged one |
 | 10 | **Phase 2/3 Validation** tab: click **▶ Load synthetic example data** | Simulation 66.7%, fly 30.0% and human 30.0%, both marked **✅ Yes** (same direction) |
-| 11 | Add a second perturbation, **GABA Dysfunction** at 50% | The firing-threshold caption now counts affected neurons, the *Damaged firing threshold* KPI gets a value, and the deviations change |
-| 12 | Set any intensity to **100** | A warning explains that near-total blockage makes the numbers look extreme by design |
-| 13 | Data source → **Fixture (demo data)** | The small synthetic graph loads (3 PN, 6 KC, 2 MBON), with roles defaulting to PN/KC/MBON |
+| 11 | Add a second perturbation, **GABA Dysfunction** at 50% (keep Tau at 40%) | Caption: `295/5958 neurons affected (mean severity 50.0%)`. *Damaged firing threshold* becomes **1.500**, and the mean and median deviation rise to **175.2%** and **170.2%** |
+| 12 | Set the Tau intensity to **100** | A warning explains that near-total blockage makes the numbers look extreme by design. At 100% Tau, conduction stops, so a "signal never reached an output neuron" message is also expected |
+| 13 | Data source → **Fixture (demo data)** | `Graph: 11 neurons, 13 synaptic connections (input: 3, relay: 6, output: 2)`, with roles defaulting to PN/KC/MBON |
 
 #### B. Automated tests (local)
 
@@ -436,7 +436,7 @@ gösterir; klinik bir tahmin değildir.
 
 ### Hızlı başlangıç
 
-- **Sadece kullanmak için:** <https://mb-delay-sim.streamlit.app> adresini
+- **Sadece kullanmak için:** [mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true) adresini
   açın. Gerçek konektom varsayılan olarak yüklenir; kenar çubuğunun en
   üstünden dili Türkçe yapabilirsiniz.
 - **Test etmek için:** [8. bölümdeki](#8-nasıl-test-edilir) kontrol listesini
@@ -504,7 +504,7 @@ hızlı kontroller için her zaman kullanılabilir.
 ### 3. Etkileşimli Arayüz
 
 Uygulama Streamlit Community Cloud üzerinde
-<https://mb-delay-sim.streamlit.app> adresinde yayındadır ve `main` dalına
+[mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true) adresinde yayındadır ve `main` dalına
 yapılan her push'ta kendiliğinden yeniden dağıtılır. Yerelde çalıştırmak
 için:
 
@@ -700,7 +700,7 @@ gösterilebilir.
 
 #### A. Tarayıcıda (kurulum yok, ~5 dakika)
 
-<https://mb-delay-sim.streamlit.app> adresini açın. Bir "wake up" düğmesi
+[mb-delay-sim.streamlit.app](https://mb-delay-sim.streamlit.app/?embed=true) adresini açın. Bir "wake up" düğmesi
 görürseniz ücretsiz uygulama uykudadır; tıklayın ve yaklaşık 30 saniye
 bekleyin. Ardından her adımı beklenen sonuçla karşılaştırın. Değerler,
 varsayılan veri kaynağıyla (*Dahil edilen konektom (Princeton dışa
@@ -718,9 +718,9 @@ aktarımı)*) canlı uygulamadan alınmıştır.
 | 8 | **Veri** sekmesinde **comparison.csv dosyasını indir**'e tıklayın | 96 satır, her birinde `% sapma` ≈ 66.67; bir CSV dosyası iner |
 | 9 | **Canlı Yayılım** sekmesinde **▶ Oynat**'a basın veya kaydırıcıyı ortaya sürükleyin | t ≈ 0.056'da okuma, sağlıklı ağda yaklaşık **4380/5958**, hasarlı ağda **1889/5958** ateşlenmiş nöron gösterir |
 | 10 | **Faz 2/3 Doğrulama** sekmesinde **▶ Sentetik örnek veriyi yükle**'ye tıklayın | Simülasyon %66.7, sinek %30.0 ve insan %30.0; ikisi de **✅ Evet** (aynı yön) |
-| 11 | İkinci bir bozulma ekleyin: **GABA İşlev Bozukluğu**, %50 | Ateşleme eşiği açıklaması artık etkilenen nöronları sayar, *Hasarlı ateşleme eşiği* KPI'ı bir değer alır ve sapmalar değişir |
-| 12 | Herhangi bir şiddeti **100** yapın | Bir uyarı, iletimin neredeyse tamamen durması nedeniyle sayıların tasarım gereği aşırı görüneceğini açıklar |
-| 13 | Veri kaynağı → **Örnek veri (demo)** | Küçük sentetik grafik yüklenir (3 PN, 6 KC, 2 MBON); roller varsayılan olarak PN/KC/MBON olur |
+| 11 | İkinci bir bozulma ekleyin: **GABA İşlev Bozukluğu**, %50 (Tau %40'ta kalsın) | Açıklama: `295/5958 nöron etkilendi (ortalama şiddet %50.0)`. *Hasarlı ateşleme eşiği* **1.500** olur; ortalama ve medyan sapma **%175.2** ve **%170.2**'ye çıkar |
+| 12 | Tau şiddetini **100** yapın | Bir uyarı, iletimin neredeyse tamamen durması nedeniyle sayıların tasarım gereği aşırı görüneceğini açıklar. %100 Tau'da iletim durduğu için "sinyal hiçbir çıktı nöronuna ulaşmadı" mesajı da beklenen bir sonuçtur |
+| 13 | Veri kaynağı → **Örnek veri (demo)** | `Grafik: 11 nöron, 13 sinaptik bağlantı (girdi: 3, aktarıcı: 6, çıktı: 2)`; roller varsayılan olarak PN/KC/MBON olur |
 
 #### B. Otomatik testler (yerel)
 
